@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 
 interface RSVPDisplayProps {
@@ -28,17 +28,24 @@ export const RSVPDisplay: React.FC<RSVPDisplayProps> = ({
     onTogglePlay,
     onSpeedChange
 }) => {
-    const [currentWord, setCurrentWord] = useState('');
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    useEffect(() => {
+    // Derive current word directly from props
+    const currentWord = useMemo(() => {
         if (words.length > 0 && currentIndex < words.length) {
-            setCurrentWord(words[currentIndex]);
-        } else if (currentIndex >= words.length) {
-            setCurrentWord('');
-            onComplete();
+            return words[currentIndex];
         }
-    }, [currentIndex, words, onComplete]);
+        return '';
+    }, [words, currentIndex]);
+
+    // Handle completion
+    useEffect(() => {
+        if (words.length > 0 && currentIndex >= words.length) {
+            setTimeout(() => {
+                onComplete();
+            }, 0);
+        }
+    }, [currentIndex, words.length, onComplete]);
 
     useEffect(() => {
         if (isPlaying && currentIndex < words.length) {
