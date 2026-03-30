@@ -1,0 +1,30 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Push a new beta build to TestFlight"
+  lane :beta do
+    
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+      key_filepath: File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['APP_STORE_CONNECT_KEY_ID']}.p8"),
+      in_house: false
+    )
+
+    cert        # Automatically create or fetch the distribution certificate
+    sigh        # Automatically create or fetch the provisioning profile
+    
+    # Run flutter build
+    sh("cd ../.. && flutter build ios --release --no-codesign")
+
+    # Build the workspace
+    build_app(
+      scheme: "Runner",
+      workspace: "Runner.xcworkspace",
+      output_directory: "build",
+      export_method: "app-store"
+    )
+
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+end
