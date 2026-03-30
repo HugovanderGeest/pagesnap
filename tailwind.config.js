@@ -8,12 +8,13 @@ module.exports = {
     theme: {
         extend: {
             colors: {
-                background: '#E8E4DD',
-                foreground: '#111111',
-                primary: '#E8E4DD',
-                accent: '#E63B2E',
-                surface: '#F5F3EE',
-                dark: '#111111'
+                background: '#F8FAFC',
+                foreground: '#0F172A',
+                primary: '#F8FAFC',
+                accent: '#F59E0B',
+                azure: '#3B82F6',
+                surface: '#FFFFFF',
+                dark: '#0F172A'
             },
             fontFamily: {
                 heading: ['"Space Grotesk"', 'sans-serif'],

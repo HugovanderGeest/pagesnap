@@ -126,9 +126,9 @@ export const RSVPDisplay: React.FC<RSVPDisplayProps> = ({
                     </div>
                     <input
                         type="range"
-                        min="150"
+                        min="10"
                         max="1000"
-                        step="50"
+                        step="10"
                         value={wpm}
                         onChange={onSpeedChange}
                         className="input-range"

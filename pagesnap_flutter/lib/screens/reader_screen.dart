@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
 import '../models/book.dart';
 import '../services/book_store.dart';
 import '../services/sync_service.dart';
@@ -16,6 +19,7 @@ class ReaderScreen extends StatefulWidget {
 
 class _ReaderScreenState extends State<ReaderScreen> {
   LocalBook? book;
+  bool _isFullscreen = false;
 
   @override
   void initState() {
@@ -34,8 +38,30 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _loadBook();
   }
 
+  void _enterWebFullscreen() {
+    try {
+      globalContext.callMethod<JSAny?>('_enterFullscreen'.toJS);
+    } catch (_) {}
+  }
+
+  void _exitWebFullscreen() {
+    try {
+      globalContext.callMethod<JSAny?>('_exitFullscreen'.toJS);
+    } catch (_) {}
+  }
+
+  void _toggleFullscreen() {
+    if (_isFullscreen) {
+      _exitWebFullscreen();
+    } else {
+      _enterWebFullscreen();
+    }
+    setState(() => _isFullscreen = !_isFullscreen);
+  }
+
   @override
   void dispose() {
+    if (kIsWeb) _exitWebFullscreen();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -60,6 +86,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   void _handleClose() {
     if (book != null) SyncService.pushBook(book!);
+    if (kIsWeb) _exitWebFullscreen();
     Navigator.of(context).pop();
   }
 
@@ -82,6 +109,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             initialIndex: book!.wordIndex,
             onProgress: _handleProgress,
             onCompletion: _handleClose,
+            onFullscreen: kIsWeb ? _toggleFullscreen : null,
           ),
 
           // Tiny close button — top-left corner, semi-transparent

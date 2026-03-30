@@ -4,12 +4,13 @@
 
  @layer base {
    :root {
-     --background: #E8E4DD;
-     --foreground: #111111;
-     --primary: #E8E4DD;
-     --accent: #E63B2E;
-     --surface: #F5F3EE;
-     --dark: #111111;
+     --background: #F8FAFC;
+     --foreground: #0F172A;
+     --primary: #F8FAFC;
+     --accent: #F59E0B;
+     --azure: #3B82F6;
+     --surface: #FFFFFF;
+     --dark: #0F172A;
    }
 
    body {
@@ -176,7 +177,7 @@
    height: 500px;
    top: -10%;
    left: -5%;
-   background: radial-gradient(ellipse, #E63B2E 0%, #7a1a15 60%, transparent 100%);
+   background: radial-gradient(ellipse, #3B82F6 0%, #1E3A8A 60%, transparent 100%);
    animation: aurora-1 18s ease-in-out infinite;
  }
 
@@ -185,7 +186,7 @@
    height: 600px;
    bottom: -20%;
    right: -10%;
-   background: radial-gradient(ellipse, #6c3fc4 0%, #2a1060 60%, transparent 100%);
+   background: radial-gradient(ellipse, #F59E0B 0%, #78350F 60%, transparent 100%);
    animation: aurora-2 22s ease-in-out infinite;
  }
 

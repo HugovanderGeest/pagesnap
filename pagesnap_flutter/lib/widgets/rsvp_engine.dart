@@ -10,6 +10,7 @@ class RSVPEngine extends StatefulWidget {
   final int initialIndex;
   final Function(int) onProgress;
   final VoidCallback onCompletion;
+  final VoidCallback? onFullscreen;
 
   const RSVPEngine({
     Key? key,
@@ -18,6 +19,7 @@ class RSVPEngine extends StatefulWidget {
     this.initialIndex = 0,
     required this.onProgress,
     required this.onCompletion,
+    this.onFullscreen,
   }) : super(key: key);
 
   @override
@@ -34,7 +36,8 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
   // Controls visibility — auto-hides after 3 s of play
   bool _controlsVisible = true;
   bool _showSettings = false;
-  bool _isLightMode = false;
+  bool _isFullscreen = false;
+  bool _isLightMode = true;  // default to paper-white
   double _fontSize = 48.0;
   Color _pivotColor = AppTheme.primary;
   bool _showContext = true;
@@ -48,8 +51,8 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarBrightness: Brightness.dark,
-      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.light,
+      statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.transparent,
     ));
   }
@@ -138,6 +141,11 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
     });
   }
 
+  void _onFullscreenTap() {
+    setState(() => _isFullscreen = !_isFullscreen);
+    widget.onFullscreen?.call();
+  }
+
   @override
   Widget build(BuildContext context) {
     if (widget.words.isEmpty) return const SizedBox.shrink();
@@ -153,11 +161,11 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
 
     final progress = _currentIndex / (widget.words.length <= 1 ? 1 : widget.words.length - 1);
 
-    final Color bgColor = _isLightMode ? Colors.white : Colors.black;
-    final Color textColor = _isLightMode ? Colors.black87 : Colors.white;
-    final Color dimColor = _isLightMode ? Colors.black38 : Colors.white30;
-    final Color surfaceColor = _isLightMode ? Colors.grey.shade100 : const Color(0xFF111111);
-    final Color borderColor = _isLightMode ? Colors.grey.shade300 : const Color(0xFF2a2a2a);
+    final Color bgColor = _isLightMode ? AppTheme.background : Colors.black;
+    final Color textColor = _isLightMode ? AppTheme.text : Colors.white;
+    final Color dimColor = _isLightMode ? AppTheme.textDim : Colors.white30;
+    final Color surfaceColor = _isLightMode ? AppTheme.surface : const Color(0xFF111111);
+    final Color borderColor = _isLightMode ? AppTheme.border : const Color(0xFF2a2a2a);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -181,52 +189,93 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                     Positioned(top: 0, bottom: 0, child: Container(width: 1, color: dimColor.withOpacity(0.12))),
                     Positioned(left: 0, right: 0, child: Container(height: 1, color: dimColor.withOpacity(0.12))),
 
-                    // Previous word — centered, above
-                    if (_showContext && prevWord.isNotEmpty)
-                      Positioned(
-                        bottom: MediaQuery.of(context).size.height * 0.52,
-                        left: 24, right: 24,
-                        child: Text(prevWord, textAlign: TextAlign.center, maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: dimColor, fontSize: _fontSize * 0.38, fontFamily: _fontFamily)),
-                      ),
-
-                    // Next word — centered, below
-                    if (_showContext && nextWord.isNotEmpty)
-                      Positioned(
-                        top: MediaQuery.of(context).size.height * 0.52,
-                        left: 24, right: 24,
-                        child: Text(nextWord, textAlign: TextAlign.center, maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: dimColor, fontSize: _fontSize * 0.38, fontFamily: _fontFamily)),
-                      ),
-
-                    // ── Main word pivot-aligned ────────────────────────────────
+                    // ── Main word pivot-aligned + faded context left/right ──
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: Text(leftPart,
-                              textAlign: TextAlign.right,
-                              softWrap: false,
-                              overflow: TextOverflow.clip,
-                              style: TextStyle(color: textColor, fontSize: _fontSize, fontFamily: _fontFamily, fontWeight: FontWeight.bold)),
+                          // Previous word — faint, left edge, right-aligned so it hugs center
+                          SizedBox(
+                            width: 72,
+                            child: _showContext && prevWord.isNotEmpty
+                                ? Text(
+                                    prevWord,
+                                    textAlign: TextAlign.right,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.fade,
+                                    softWrap: false,
+                                    style: TextStyle(
+                                      color: dimColor.withValues(alpha: 0.45),
+                                      fontSize: _fontSize * 0.34,
+                                      fontFamily: _fontFamily,
+                                    ),
+                                  )
+                                : null,
                           ),
-                          Text(pivotChar,
-                            style: TextStyle(
-                              color: _pivotColor, fontSize: _fontSize,
-                              fontFamily: _fontFamily, fontWeight: FontWeight.bold,
-                              shadows: [Shadow(color: _pivotColor.withOpacity(0.6), blurRadius: 10)])),
+                          const SizedBox(width: 8),
+
+                          // Pivot-aligned center word
                           Expanded(
-                            child: Text(rightPart,
-                              textAlign: TextAlign.left,
-                              softWrap: false,
-                              overflow: TextOverflow.clip,
-                              style: TextStyle(color: textColor, fontSize: _fontSize, fontFamily: _fontFamily, fontWeight: FontWeight.bold)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Expanded(
+                                  child: Text(leftPart,
+                                    textAlign: TextAlign.right,
+                                    softWrap: false,
+                                    overflow: TextOverflow.clip,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: _fontSize,
+                                      fontFamily: _fontFamily,
+                                      fontWeight: FontWeight.bold,
+                                    )),
+                                ),
+                                Text(pivotChar,
+                                  style: TextStyle(
+                                    color: _pivotColor,
+                                    fontSize: _fontSize,
+                                    fontFamily: _fontFamily,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [Shadow(color: _pivotColor.withValues(alpha: 0.5), blurRadius: 8)],
+                                  )),
+                                Expanded(
+                                  child: Text(rightPart,
+                                    textAlign: TextAlign.left,
+                                    softWrap: false,
+                                    overflow: TextOverflow.clip,
+                                    style: TextStyle(
+                                      color: textColor,
+                                      fontSize: _fontSize,
+                                      fontFamily: _fontFamily,
+                                      fontWeight: FontWeight.bold,
+                                    )),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(width: 8),
+                          // Next word — faint, right edge, left-aligned so it hugs center
+                          SizedBox(
+                            width: 72,
+                            child: _showContext && nextWord.isNotEmpty
+                                ? Text(
+                                    nextWord,
+                                    textAlign: TextAlign.left,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.fade,
+                                    softWrap: false,
+                                    style: TextStyle(
+                                      color: dimColor.withValues(alpha: 0.45),
+                                      fontSize: _fontSize * 0.34,
+                                      fontFamily: _fontFamily,
+                                    ),
+                                  )
+                                : null,
                           ),
                         ],
                       ),
@@ -352,6 +401,16 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                           _showSettings ? _pivotColor : dimColor,
                           _showSettings ? _pivotColor : borderColor,
                           bg: _showSettings ? _pivotColor.withOpacity(0.15) : null),
+                        if (widget.onFullscreen != null) ...[  
+                          const SizedBox(width: 12),
+                          _iconBtn(
+                            _isFullscreen ? LucideIcons.minimize2 : LucideIcons.maximize2,
+                            _onFullscreenTap,
+                            _isFullscreen ? _pivotColor : dimColor,
+                            _isFullscreen ? _pivotColor : borderColor,
+                            bg: _isFullscreen ? _pivotColor.withOpacity(0.15) : null,
+                          ),
+                        ],
                       ],
                     ),
                   ),

@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
-import { Upload, Camera, ImageIcon, Loader2, Play, Pause, RotateCcw, Maximize2, Minimize2, Settings } from 'lucide-react';
+import { Upload, Camera, Loader2, Play, Pause, RotateCcw, Maximize2, Minimize2, Settings } from 'lucide-react';
 import { processFiles } from '@/utils/extract';
 
 if (typeof window !== 'undefined') {
@@ -12,7 +12,11 @@ if (typeof window !== 'undefined') {
 
 
 // Words streamed in the hero background RSVP animation
-const HERO_WORDS = 'The human brain processes language at extraordinary speed up to one thousand words per minute yet traditional reading forces your eyes through an exhausting physical obstacle course of saccades line sweeps and constant repositioning PageSnap eliminates this friction entirely One word One anchor Pure signal'.split(' ');
+const HERO_WORDS = 'The human brain processes language at extraordinary speed up to one thousand words per minute yet traditional reading forces your eyes through an exhausting physical obstacle course of saccades line sweeps and constant repositioning Peruse eliminates this friction entirely One word One anchor Pure signal'.split(' ');
+const IOS_DOWNLOAD_URL = '#';
+const ANDROID_DOWNLOAD_URL = '#';
+const APP_STORE_BADGE_SRC = 'https://toolbox.marketingtools.apple.com/api/assets/featured-content/apps/badges/badge-1/en-us.svg';
+const GOOGLE_PLAY_BADGE_SRC = 'https://play.google.com/intl/en_us/badges/images/generic/en_badge_web_generic.png';
 
 function HeroRSVP() {
   const [idx, setIdx] = useState(0);
@@ -37,11 +41,11 @@ function HeroRSVP() {
       {/* live centred word */}
       <div className="relative z-10 flex items-baseline font-black leading-none" style={{ fontSize: 'clamp(4rem,10vw,9rem)', opacity: 0.15 }}>
         <span className="text-white">{pre}</span>
-        <span style={{ color: '#E63B2E', filter: 'drop-shadow(0 0 50px #E63B2ECC)' }}>{piv}</span>
+        <span style={{ color: '#F59E0B', filter: 'drop-shadow(0 0 50px #F59E0BCC)' }}>{piv}</span>
         <span className="text-white">{post}</span>
       </div>
       {/* radial vignette */}
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 15%, #0a0a0a 75%)' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at center, transparent 15%, #0F172A 75%)' }} />
     </div>
   );
 }
@@ -52,7 +56,7 @@ const PHONE_TEXT = 'She opened the letter slowly. The words blurred together as 
 function HeroPhoneDemo() {
   const [idx, setIdx] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const pivotColor = '#E63B2E';
+  const pivotColor = '#F59E0B';
   const glow = `drop-shadow(0 0 18px ${pivotColor}bb) drop-shadow(0 0 6px ${pivotColor}66)`;
 
   useEffect(() => {
@@ -99,8 +103,8 @@ function HeroPhoneDemo() {
 }
 
 // RSVP Reader — phone shell, fullscreen, auto-hide, dynamic glow, context toggle
-function ReaderEngine({ words, wpm, isPlaying, onPause, onComplete, currentIndex, onIndexChange, onTogglePlay, onRestart, onSpeedChange }: {
-  words: string[]; wpm: number; isPlaying: boolean; onPause: () => void; onComplete: () => void;
+function ReaderEngine({ words, wpm, isPlaying, onComplete, currentIndex, onIndexChange, onTogglePlay, onRestart, onSpeedChange }: {
+  words: string[]; wpm: number; isPlaying: boolean; onComplete: () => void;
   currentIndex: number; onIndexChange: (i: number) => void; onTogglePlay: () => void;
   onRestart: () => void; onSpeedChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
@@ -109,7 +113,7 @@ function ReaderEngine({ words, wpm, isPlaying, onPause, onComplete, currentIndex
   const hideRef = useRef<NodeJS.Timeout | null>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const isDragging = useRef(false);
-  const [pivotColor, setPivotColor] = useState('#E63B2E');
+  const [pivotColor, setPivotColor] = useState('#F59E0B');
   const [showContext, setShowContext] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [ctrlVisible, setCtrlVisible] = useState(true);
@@ -213,7 +217,7 @@ function ReaderEngine({ words, wpm, isPlaying, onPause, onComplete, currentIndex
         className="relative overflow-hidden select-none w-full"
         style={isFullscreen
           ? { position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: '#000000' }
-          : { backgroundColor: '#0a0a0a', borderRadius: '2rem 2rem 0 0', border: '1px solid #2a2a2a', borderBottom: 'none', boxShadow: '0 -4px 40px rgba(0,0,0,.4)', height: '400px' }
+          : { backgroundColor: '#0F172A', borderRadius: '2rem 2rem 0 0', border: '1px solid #1E293B', borderBottom: 'none', boxShadow: '0 -4px 40px rgba(0,0,0,.4)', height: '400px' }
         }
       >
         {/* guide lines */}
@@ -308,7 +312,7 @@ function ReaderEngine({ words, wpm, isPlaying, onPause, onComplete, currentIndex
 
       {/* ── CONTROLS PANEL (below reader, always visible on non-fullscreen) ── */}
       {!isFullscreen && (
-        <div className="w-full bg-[#111] border border-[#2a2a2a] border-t-0 rounded-b-2xl">
+        <div className="w-full bg-[#0F172A] border border-[#1E293B] border-t-0 rounded-b-2xl">
 
           {/* Playback bar — fullscreen · play · settings */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
@@ -337,7 +341,7 @@ function ReaderEngine({ words, wpm, isPlaying, onPause, onComplete, currentIndex
               <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Reading Speed</span>
               <span className="text-[10px] font-bold text-white/60 font-mono">{wpm} WPM</span>
             </div>
-            <input type="range" min="50" max="1000" step="50" value={wpm} onChange={onSpeedChange}
+            <input type="range" min="10" max="1000" step="10" value={wpm} onChange={onSpeedChange}
               className="w-full h-1 rounded-full appearance-none cursor-pointer" style={{ accentColor: pivotColor }} />
           </div>
 
@@ -360,7 +364,7 @@ function ReaderEngine({ words, wpm, isPlaying, onPause, onComplete, currentIndex
               <div>
                 <span className="text-[10px] text-white/40 uppercase tracking-widest font-mono block mb-3">Pivot Colour</span>
                 <div className="flex items-center gap-3">
-                  {['#E63B2E', '#3B9EE6', '#3BE66A', '#E6D53B', '#B03BE6', '#FFFFFF'].map(c => (
+                  {['#F59E0B', '#3B82F6', '#10B981', '#E6D53B', '#B03BE6', '#FFFFFF'].map(c => (
                     <button key={c} onClick={() => setPivotColor(c)}
                       className="w-7 h-7 rounded-full border-2 transition-all hover:scale-110 shrink-0"
                       style={{ background: c, borderColor: pivotColor === c ? '#fff' : 'transparent', boxShadow: pivotColor === c ? '0 0 12px ' + c : 'none' }} />
@@ -420,16 +424,6 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Feature Cards State
-  const [shuffleCards, setShuffleCards] = useState([
-    { id: 1, title: 'Visual Noise Cancellation', desc: 'Isolates variables to reduce cognitive load.' },
-    { id: 2, title: 'Dyslexia Protocol', desc: 'Optimized spacing, weighting, and anchor points.' },
-    { id: 3, title: 'Focus Processing', desc: 'Streamlines input for massive text retention.' }
-  ]);
-  const [typedText, setTypedText] = useState('');
-  const targetText = "> SYSTEM PREPARING... SPEED ENGINE ENGAGED... CAPABILITIES UP TO 1000 WPM CONFIRMED... WAITING FOR INPUT...";
-  const [activeDay, setActiveDay] = useState<number | null>(null);
-
   // Animations
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -459,84 +453,9 @@ export default function Home() {
         delay: 0.2
       });
 
-      // Philosophy Reveal
-      gsap.from('.philo-text', {
-        scrollTrigger: {
-          trigger: '.philosophy-section',
-          start: 'top 60%',
-        },
-        y: 40,
-        opacity: 0,
-        stagger: 0.2,
-        duration: 1,
-        ease: 'power3.out'
-      });
-
-      // Protocol Stacking
-      const cards = gsap.utils.toArray('.protocol-card') as HTMLElement[];
-      cards.forEach((card, i) => {
-        ScrollTrigger.create({
-          trigger: card,
-          start: 'top top',
-          pin: true,
-          pinSpacing: i === cards.length - 1 ? true : false,
-          end: '+=100%',
-        });
-
-        if (i < cards.length - 1) {
-          gsap.to(card, {
-            scale: 0.9,
-            opacity: 0.3,
-            filter: 'blur(10px)',
-            scrollTrigger: {
-              trigger: cards[i + 1],
-              start: 'top bottom',
-              end: 'top top',
-              scrub: true,
-            }
-          });
-        }
-      });
     }, mainRef);
 
     return () => ctx.revert();
-  }, []);
-
-  // Card 1 Shuffler Logic
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setShuffleCards(prev => {
-        const newArr = [...prev];
-        const last = newArr.pop();
-        if (last) newArr.unshift(last);
-        return newArr;
-      });
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Card 2 Typewriter Logic
-  useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i < targetText.length) {
-        setTypedText(targetText.slice(0, i + 1));
-        i++;
-      }
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Card 3 Scheduler Logic
-  useEffect(() => {
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 });
-    tl.to('.fake-cursor', { x: 80, y: 40, duration: 1, ease: 'power2.inOut' })
-      .to('.fake-cursor', { scale: 0.8, duration: 0.1, onComplete: () => setActiveDay(3) })
-      .to('.fake-cursor', { scale: 1, duration: 0.1 })
-      .to('.fake-cursor', { x: 160, y: 80, duration: 1, ease: 'power2.inOut' })
-      .to('.fake-cursor', { opacity: 0, duration: 0.2 })
-      .set('.fake-cursor', { x: 0, y: 0, opacity: 1, onComplete: () => setActiveDay(null) });
-    return () => { tl.kill(); };
   }, []);
 
   // Handlers for actual App func
@@ -569,23 +488,34 @@ export default function Home() {
     <main ref={mainRef} className="bg-background text-foreground overflow-x-hidden selection:bg-accent selection:text-white">
 
       {/* NAVBAR */}
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between px-6 py-3 w-[90%] max-w-4xl rounded-full nav-glass nav-text text-white transition-all duration-300">
-        <div className="font-bold text-xl uppercase tracking-tighter">PageSnap</div>
-        <div className="hidden md:flex gap-8 text-sm font-mono uppercase tracking-widest font-bold">
-          <a href="#features" className="hover:text-accent transition-colors">Architecture</a>
-          <a href="#protocol" className="hover:text-accent transition-colors">Protocol</a>
-          <a href="#get-started" className="hover:text-accent transition-colors">Engine</a>
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center justify-between gap-4 px-4 py-3 w-[94%] max-w-6xl rounded-full nav-glass nav-text text-white transition-all duration-300">
+        <div className="font-bold text-xl uppercase tracking-tighter">Peruse</div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <a
+            href={IOS_DOWNLOAD_URL}
+            aria-label="Download on the App Store"
+            className="transition-transform hover:scale-[1.02]"
+          >
+            <img src={APP_STORE_BADGE_SRC} alt="Download on the App Store" className="h-11 w-auto" />
+          </a>
+          <a
+            href={ANDROID_DOWNLOAD_URL}
+            aria-label="Get it on Google Play"
+            className="transition-transform hover:scale-[1.02]"
+          >
+            <img src={GOOGLE_PLAY_BADGE_SRC} alt="Get it on Google Play" className="h-11 w-auto" />
+          </a>
+          <button
+            onClick={() => document.getElementById('get-started')?.scrollIntoView({ behavior: 'smooth' })}
+            className="hidden lg:inline-flex bg-accent text-white px-6 py-2 rounded-full uppercase text-xs font-bold tracking-widest btn-magnetic"
+          >
+            <span>Try Demo</span>
+          </button>
         </div>
-        <button
-          onClick={() => document.getElementById('get-started')?.scrollIntoView({ behavior: 'smooth' })}
-          className="bg-accent text-white px-6 py-2 rounded-full uppercase text-xs font-bold tracking-widest btn-magnetic"
-        >
-          <span>Upload</span>
-        </button>
       </nav>
 
       {/* HERO SECTION — split layout */}
-      <section className="relative w-full min-h-[100dvh] flex items-center bg-dark overflow-hidden">
+      <section id="top" className="relative w-full min-h-[100dvh] flex items-center bg-dark overflow-hidden">
 
         {/* ── SIMPLE GRADIENT BACKGROUND ── */}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-accent/10 to-transparent pointer-events-none" />
@@ -610,10 +540,10 @@ export default function Home() {
                 <span className="block w-2 h-2 rounded-full bg-white animate-pulse"></span>
               </button>
               <button
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => document.getElementById('get-started')?.scrollIntoView({ behavior: 'smooth' })}
                 className="border border-white/20 text-white/60 hover:text-white hover:border-white/50 px-8 py-5 rounded-full uppercase text-xs font-bold tracking-[0.2em] transition-all"
               >
-                See How It Works
+                Jump To Demo
               </button>
             </div>
           </div>
@@ -621,7 +551,7 @@ export default function Home() {
           {/* RIGHT — live phone-sized RSVP demo */}
           <div className="hero-part flex-shrink-0 flex flex-col items-center gap-4">
             <div
-              className="relative bg-[#080808] overflow-hidden select-none"
+              className="relative bg-[#0F172A] overflow-hidden select-none"
               style={{ width: '280px', height: '520px', borderRadius: '2.5rem', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 40px 80px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05)' }}
             >
               {/* status bar */}
@@ -629,7 +559,7 @@ export default function Home() {
                 <div className="w-20 h-1 rounded-full bg-white/10" />
               </div>
               {/* notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-7 bg-[#080808] rounded-b-2xl z-20" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-7 bg-[#0F172A] rounded-b-2xl z-20" />
               {/* HeroRSVP miniature */}
               <HeroPhoneDemo />
               {/* bottom bar */}
@@ -648,151 +578,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* DYSLEXIC PROOF DEMO SECTION */}
-      <section id="features" className="py-32 px-6 w-full max-w-7xl mx-auto flex flex-col gap-12">
-        <div className="flex flex-col md:flex-row gap-8 items-end justify-between">
-          <div className="flex flex-col gap-4 max-w-2xl">
-            <h2 className="font-heading text-4xl font-bold uppercase tracking-tighter text-accent">Eliminate Dyslexic Resistance</h2>
-            <p className="font-mono text-dark/60 text-sm uppercase tracking-widest leading-loose">
-              People with dyslexia struggle with traditional text structures: letter crowding, physical scanning mechanics, and lack of visual anchors. See how our RSVP Engine strips the resistance away, serving pure semantic signal directly to your ocular pivot points.
-            </p>
-          </div>
-          <div className="font-mono text-xs text-dark/40 uppercase tracking-widest bg-dark/5 px-4 py-2 rounded-full border border-dark/10">
-            Interactive Comparison
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-[500px]">
-
-          {/* Dyslexic Wall of Text */}
-          <div className="bg-surface rounded-[2rem] border border-black/5 p-8 flex flex-col gap-6 relative overflow-hidden group">
-            <div className="flex items-center gap-3">
-              <span className="w-2 h-2 rounded-full bg-red-500"></span>
-              <h3 className="font-heading font-bold text-xl uppercase tracking-tighter">The Problem: Cognitive Overload</h3>
-            </div>
-            <div className="font-mono text-xs text-dark/40 uppercase tracking-widest leading-loose text-justify opacity-60 group-hover:blur-sm transition-all duration-700 select-none">
-              Whenyoureadatraditional block oftext,your eyesmustmake complex physicalmovements calledsaccades. Fordyslexic readers, thesemovements areoftenerratic. Letters appear to crowd together, jump lines, or blend into unrecognizable shapes. The cognitive effort required simply to decode the symbols leaves very little processing power available for actual comprehension and retention of the material.
-              <br /><br />
-              Furthermore, tracking along a horizontal line and sweeping back to the start of the next line introduces frequent opportunities to lose one&apos;s place. This constant resetting and searching for context creates an exhausting, fragmented reading experience.
-            </div>
-          </div>
-
-          {/* RSVP Solution Simulator */}
-          <div className="bg-dark rounded-[2rem] border border-dark p-8 flex flex-col gap-6 h-full relative">
-            <div className="flex items-center gap-3 text-white">
-              <span className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_10px_rgba(230,59,46,0.8)]"></span>
-              <h3 className="font-heading font-bold text-xl uppercase tracking-tighter">The Solution: Single Anchor</h3>
-            </div>
-
-            <div className="flex-1 flex flex-col items-center justify-center border border-white/10 rounded-2xl bg-black/40 relative overflow-hidden p-6 mt-4">
-              <div className="absolute top-4 bottom-4 left-1/2 w-px bg-white/10"></div>
-              <div className="absolute left-4 right-4 top-1/2 h-px bg-white/10"></div>
-
-              <div className="flex w-full text-3xl md:text-5xl font-bold font-mono leading-none z-10 text-white perspective-1000 items-center justify-center">
-                <div className="flex-1 text-right text-surface/80">dys</div>
-                <div className="w-[1ch] text-center text-accent scale-110 drop-shadow-[0_0_12px_rgba(230,59,46,0.8)]">l</div>
-                <div className="flex-1 text-left text-surface/80">exia</div>
-              </div>
-
-              <div className="font-mono text-xs text-white/40 uppercase tracking-widest text-center mt-12 bg-black/40 px-4 py-2 rounded-lg backdrop-blur z-20">
-                No eye movement required.<br />The text presents itself to you.
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* PHILOSOPHY SECTION */}
-      <section className="philosophy-section relative py-40 w-full overflow-hidden bg-dark text-white">
-        <div
-          className="absolute inset-0 bg-cover bg-center opacity-20 parallax-bg mix-blend-overlay"
-          style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2670&auto=format&fit=crop")' }}
-        ></div>
-        <div className="relative z-10 w-full max-w-5xl mx-auto px-6 flex flex-col gap-12 text-center md:text-left">
-          <p className="philo-text font-heading text-lg md:text-2xl text-white/50 uppercase tracking-widest">
-            MOST PLATFORMS FOCUS ON: DECORATION AND INFINITE SCROLL.
-          </p>
-          <p className="philo-text text-drama text-5xl md:text-8xl leading-none">
-            We focus on: pure <span className="text-accent">Ingestion.</span>
-          </p>
-        </div>
-      </section>
-
-      {/* PROTOCOL SECTION */}
-      <section id="protocol" className="w-full bg-background relative protocol-container py-32">
-        <div className="w-full max-w-5xl mx-auto px-6 mb-20 text-center">
-          <h2 className="font-heading text-5xl font-bold uppercase tracking-tighter mb-4">The Protocol</h2>
-          <p className="font-mono text-dark/50 text-sm uppercase tracking-widest">A three-step mechanism for cognitive assimilation.</p>
-        </div>
-
-        {/* Card 1 */}
-        <div className="protocol-card w-full min-h-[90vh] sticky top-0 flex items-center justify-center p-6">
-          <div className="w-full max-w-4xl min-h-[70vh] bg-surface rounded-[3rem] border border-black/10 shadow-xl overflow-hidden flex flex-col md:flex-row relative">
-            <div className="w-full md:w-1/2 min-h-[300px] flex items-center justify-center p-8 md:p-12 bg-dark md:rounded-[3rem] z-10">
-              {/* Rotating gear/geometry motif */}
-              <svg className="w-full h-full max-h-[300px] text-accent animate-[spin_20s_linear_infinite]" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1">
-                <circle cx="50" cy="50" r="40" strokeDasharray="4 4" />
-                <circle cx="50" cy="50" r="30" strokeOpacity="0.5" />
-                <path d="M50 10 L50 30 M50 70 L50 90 M10 50 L30 50 M70 50 L90 50" strokeWidth="2" />
-              </svg>
-            </div>
-            <div className="w-full md:w-1/2 p-12 flex flex-col justify-center">
-              <span className="font-mono text-accent text-4xl mb-6">01</span>
-              <h3 className="font-heading text-4xl font-bold uppercase tracking-tighter mb-4">Digitize Environment</h3>
-              <p className="font-mono text-sm text-dark/60 uppercase tracking-widest leading-loose">
-                Upload existing literature. The system strips away unnecessary graphical elements, leaving only raw, structural text.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2 */}
-        <div className="protocol-card w-full min-h-[90vh] sticky top-0 flex items-center justify-center p-6">
-          <div className="w-full max-w-4xl min-h-[70vh] bg-surface rounded-[3rem] border border-black/10 shadow-xl overflow-hidden flex flex-col md:flex-row relative">
-            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center order-2 md:order-1">
-              <span className="font-mono text-accent text-3xl md:text-4xl mb-6">02</span>
-              <h3 className="font-heading text-3xl md:text-4xl font-bold uppercase tracking-tighter mb-4">Calibrate Engine</h3>
-              <p className="font-mono text-xs md:text-sm text-dark/60 uppercase tracking-widest leading-loose">
-                Adjust the optical delivery velocity. Set your baseline WPM and let the algorithm align the text to your ocular pivot points.
-              </p>
-            </div>
-            <div className="w-full md:w-1/2 min-h-[300px] flex items-center justify-center bg-dark p-8 md:p-12 order-1 md:order-2">
-              <div className="relative w-full h-full max-h-[300px] border border-white/20 grid grid-cols-10 grid-rows-10 gap-1 overflow-hidden">
-                <div className="absolute inset-y-0 left-0 w-1 bg-accent shadow-[0_0_15px_rgba(230,59,46,1)] animate-[slideRight_3s_ease-in-out_infinite_alternate]" style={{ animation: 'slideRight 3s ease-in-out infinite alternate' }}></div>
-                <style>{`@keyframes slideRight { 0% { left: 0%; opacity: 0; } 50% { opacity: 1; } 100% { left: 100%; opacity: 0; } }`}</style>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 3 */}
-        <div className="protocol-card w-full min-h-[90vh] sticky top-0 flex items-center justify-center p-6 mb-32">
-          <div className="w-full max-w-4xl min-h-[70vh] bg-surface rounded-[3rem] border border-black/10 shadow-xl overflow-hidden flex flex-col md:flex-row relative">
-            <div className="w-full md:w-1/2 min-h-[300px] flex items-center justify-center bg-dark p-8 md:p-12">
-              {/* Pulsing EKG waveform */}
-              <svg className="w-full max-h-[300px] text-accent" viewBox="0 0 200 100" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M0 50 H50 L60 20 L75 80 L90 10 L105 90 L120 50 H200" className="animate-[dash_2s_linear_infinite]" strokeDasharray="300" strokeDashoffset="300" />
-                <style>{`@keyframes dash { to { stroke-dashoffset: 0; } }`}</style>
-              </svg>
-            </div>
-            <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-              <span className="font-mono text-accent text-3xl md:text-4xl mb-6">03</span>
-              <h3 className="font-heading text-3xl md:text-4xl font-bold uppercase tracking-tighter mb-4">Absolute Clarity</h3>
-              <p className="font-mono text-xs md:text-sm text-dark/60 uppercase tracking-widest leading-loose">
-                Engage. The text is fed directly to your visual cortex, removing the physical scanning action and maximizing absorption.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* GET STARTED / APP INITIALIZATION ENGINE */}
+      {/* DEMO */}
       <section id="get-started" className="py-40 px-6 w-full max-w-5xl mx-auto flex flex-col items-center">
         <div className="text-center mb-16">
-          <h2 className="font-heading text-5xl font-bold uppercase tracking-tighter mb-6 text-dark drop-shadow-md">Initialize Application</h2>
+          <h2 className="font-heading text-5xl font-bold uppercase tracking-tighter mb-6 text-dark drop-shadow-md">Try The Demo</h2>
           <p className="font-mono text-dark/60 max-w-lg mx-auto uppercase tracking-widest text-sm leading-relaxed">
-            Upload text documents or photographs of book pages to immediately engage the RSVP velocity engine.
+            Upload text documents or photos of book pages and test the Peruse reading demo directly in the browser.
           </p>
         </div>
 
@@ -845,7 +636,7 @@ export default function Home() {
             <div className="w-full rounded-[2rem] bg-[#0d0d0d] p-6 shadow-2xl border border-white/5">
               <ReaderEngine
                 words={words} wpm={wpm} isPlaying={isPlaying} currentIndex={currentIndex}
-                onPause={() => setIsPlaying(false)} onComplete={() => { setIsPlaying(false); setStatus('ready'); }}
+                onComplete={() => { setIsPlaying(false); setStatus('ready'); }}
                 onIndexChange={setCurrentIndex} onRestart={() => { setIsPlaying(false); setCurrentIndex(0); }}
                 onTogglePlay={() => setIsPlaying(!isPlaying)} onSpeedChange={(e: React.ChangeEvent<HTMLInputElement>) => setWpm(parseInt(e.target.value))}
               />
@@ -859,7 +650,8 @@ export default function Home() {
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-accent/10 to-transparent pointer-events-none"></div>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-16 relative z-10">
           <div className="flex flex-col gap-6 max-w-sm">
-            <div className="font-bold text-3xl uppercase tracking-tighter text-white">PageSnap</div>
+            <div className="font-bold text-3xl uppercase tracking-tighter text-white">Peruse</div>
+            <p className="font-mono text-sm uppercase tracking-widest text-accent">Copyright &copy; 2026 Peruse. All rights reserved.</p>
             <p className="font-mono text-white/50 text-xs uppercase tracking-widest leading-loose">
               Biological data processed at maximum velocity. The ultimate dyslexia-optimized reading protocol.
             </p>

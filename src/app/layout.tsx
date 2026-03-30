@@ -11,9 +11,9 @@ const lexend = Lexend({ subsets: ['latin'], variable: '--font-lexend', weight: [
 const atkinson = Atkinson_Hyperlegible({ subsets: ['latin'], variable: '--font-atkinson', weight: ['400', '700'] })
 
 export const metadata: Metadata = {
-  title: 'PageSnap | Digital Reading Engine',
-  description: 'Upload books digitally and read faster than ever before.',
-}
+  title: "Peruse | Read at the Speed of Thought",
+  description: "The ultimate dyslexia-optimized reading protocol. Single-anchor RSVP reading for maximum retention.",
+};
 
 export default function RootLayout({
   children,

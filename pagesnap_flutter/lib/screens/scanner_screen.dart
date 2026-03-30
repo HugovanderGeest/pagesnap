@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../services/ocr_service.dart';
-import '../services/book_matcher_service.dart';
+import '../services/scan_counter.dart';
+import '../services/book_store.dart';
+import '../models/book.dart';
 import '../theme/colors.dart';
+import 'reader_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({Key? key}) : super(key: key);
@@ -18,16 +20,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
   int _cameraIndex = 0;          // which camera is active
   final List<String> _capturedPaths = [];
   final OcrService _ocr = OcrService();
-  final BookMatcherService _matcher = BookMatcherService();
 
   bool _isInitialized = false;
   bool _isProcessing = false;
   bool _showTips = true;
   String _status = 'Align the page inside the frame and tap the shutter';
-  BookMatch? _result;
-  bool _noMatch = false;
-  bool _webOcrUnavailable = false;  // show manual input fallback
-  final TextEditingController _manualTitle = TextEditingController();
+
+  // After OCR succeeds:
+  List<String> _extractedWords = [];
+  bool _showSaveView = false;
+  final TextEditingController _bookTitleCtrl = TextEditingController();
+
+  // Fallback: user pastes text manually
+  bool _showPasteView = false;
+  final TextEditingController _pasteCtrl = TextEditingController();
+
+  int _totalScanned = 0;
 
   static const int _maxPages = 10;
 
@@ -35,6 +43,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
   void initState() {
     super.initState();
     _initCamera();
+    _loadScanCount();
+  }
+
+  Future<void> _loadScanCount() async {
+    final count = await ScanCounter.getCount();
+    if (mounted) setState(() => _totalScanned = count);
   }
 
   Future<void> _initCamera() async {
@@ -64,74 +78,151 @@ class _ScannerScreenState extends State<ScannerScreen> {
   void dispose() {
     _controller?.dispose();
     _ocr.dispose();
-    _manualTitle.dispose();
+    _bookTitleCtrl.dispose();
+    _pasteCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _capture() async {
     if (_controller == null || !_controller!.value.isInitialized) return;
     if (_capturedPaths.length >= _maxPages) return;
+
+    // Enforce free-tier limit for guests
+    if (!ScanCounter.isLoggedIn && _totalScanned >= ScanCounter.freeLimit) {
+      _showPaywall();
+      return;
+    }
+
     final file = await _controller!.takePicture();
     setState(() {
       _capturedPaths.add(file.path);
       _showTips = false;
-      _noMatch = false;
       _status = '${_capturedPaths.length}/$_maxPages pages captured. '
           '${_capturedPaths.length < _maxPages ? 'Scan another or tap Identify.' : 'Tap Identify to find your book!'}';
     });
+
+    // Count only scans by guests
+    if (!ScanCounter.isLoggedIn) {
+      await ScanCounter.increment();
+      final updated = await ScanCounter.getCount();
+      if (mounted) setState(() => _totalScanned = updated);
+    }
+  }
+
+  void _showPaywall() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Free scans used up',
+          style: TextStyle(color: AppTheme.text, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'You\'ve used all 10 free scans.\n\n'
+          'Create a free account to keep scanning and sync your reading progress.',
+          style: TextStyle(color: AppTheme.textDim, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Not now', style: TextStyle(color: AppTheme.textDim)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);   // close dialog
+              Navigator.pop(context); // close scanner — Account tab is waiting
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            ),
+            child: const Text('Create free account →'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _identify() async {
     if (_capturedPaths.isEmpty) return;
-    setState(() { _isProcessing = true; _status = 'Reading text from pages…'; });
+    setState(() { _isProcessing = true; _status = 'Reading text from images…'; });
     try {
       final text = await _ocr.extractTextFromImages(_capturedPaths);
-      setState(() => _status = 'Matching from ${text.split(' ').length} words…');
-      final match = await _matcher.matchBook(text);
+      final words = text
+          .split(RegExp(r'\s+'))
+          .map((w) => w.trim())
+          .where((w) => w.isNotEmpty && w.contains(RegExp(r'[a-zA-Z0-9\u00C0-\u024F]')))
+          .toList();
       setState(() {
         _isProcessing = false;
-        _result = match;
-        _noMatch = match == null;
-        _status = match != null ? 'Book identified!' : 'No match. Try scanning 2–3 more pages.';
+        _extractedWords = words;
+        _showSaveView = true;
+        _status = '${words.length} words extracted from ${_capturedPaths.length} pages';
       });
     } on UnsupportedError {
-      // OCR not available on web — let user search by title
       setState(() {
         _isProcessing = false;
-        _webOcrUnavailable = true;
-        _status = 'Enter the book title to search manually';
+        _showPasteView = true;
+        _status = 'Paste the text you want to read';
       });
     } catch (e) {
-      setState(() { _isProcessing = false; _status = 'Error: $e'; });
+      setState(() { _isProcessing = false; _status = 'Could not read text: $e'; });
     }
+  }
+
+  Future<void> _saveAndRead(List<String> words) async {
+    if (words.isEmpty) return;
+    final rawTitle = _bookTitleCtrl.text.trim();
+    final now = DateTime.now();
+    final title = rawTitle.isNotEmpty
+        ? rawTitle
+        : 'Scan ${now.day}/${now.month}/${now.year}';
+    final book = LocalBook(
+      id: now.millisecondsSinceEpoch.toString(),
+      title: title,
+      progress: 0.0,
+      wordIndex: 0,
+      totalWords: words.length,
+      lastRead: now.millisecondsSinceEpoch,
+      words: words,
+    );
+    await BookStore.save(book);
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => ReaderScreen(bookId: book.id)),
+    );
   }
 
   void _reset() {
     setState(() {
       _capturedPaths.clear();
-      _result = null;
-      _noMatch = false;
+      _extractedWords = [];
+      _showSaveView = false;
+      _showPasteView = false;
       _showTips = true;
-      _webOcrUnavailable = false;
-      _manualTitle.clear();
+      _bookTitleCtrl.clear();
+      _pasteCtrl.clear();
       _status = 'Align the page inside the frame and tap the shutter';
     });
   }
 
-  Future<void> _openStore(String query) async {
-    final uri = Uri.parse('https://www.google.com/search?q=${Uri.encodeQueryComponent(query)}+buy+ebook');
-    if (await canLaunchUrl(uri)) launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
   @override
   Widget build(BuildContext context) {
+    Widget body;
+    if (_showPasteView) {
+      body = _buildPasteTextView();
+    } else if (_showSaveView) {
+      body = _buildSaveBookView();
+    } else {
+      body = _buildScannerView();
+    }
     return Scaffold(
       backgroundColor: Colors.black,
-      body: _webOcrUnavailable
-          ? _buildManualSearchView()
-          : (_result != null
-              ? _buildResultView()
-              : (_noMatch ? _buildNoMatchView() : _buildScannerView())),
+      body: body,
     );
   }
 
@@ -337,199 +428,231 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  Widget _buildManualSearchView() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search_rounded, size: 64, color: Color(0xFFF59E0B)),
-            const SizedBox(height: 20),
-            const Text('Text scanning not available in browser',
-              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center),
-            const SizedBox(height: 10),
-            const Text('Search the book by title instead:',
-              style: TextStyle(color: Colors.white54, fontSize: 13)),
-            const SizedBox(height: 24),
-            TextField(
-              controller: _manualTitle,
-              autofocus: true,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'e.g. Atomic Habits',
-                hintStyle: const TextStyle(color: Colors.white30),
-                filled: true,
-                fillColor: const Color(0xFF1E293B),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                suffixIcon: const Icon(Icons.search, color: Color(0xFFF59E0B)),
+  // ── Save Book view — shown after OCR succeeds ────────────────────────────
+  Widget _buildSaveBookView() {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: _reset,
+                child: const Row(children: [
+                  Icon(Icons.arrow_back, color: AppTheme.textDim, size: 18),
+                  SizedBox(width: 8),
+                  Text('Scan Again', style: TextStyle(color: AppTheme.textDim, fontSize: 14)),
+                ]),
               ),
-              onSubmitted: (v) => _openStore(v),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () => _openStore(_manualTitle.text),
-              icon: const Icon(Icons.menu_book_rounded),
-              label: const Text('FIND & BUY E-BOOK'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextButton(onPressed: _reset, child: const Text('Back to Scanner', style: TextStyle(color: Colors.white38))),
-          ],
-        ),
-      ),
-    );
-  }
+              const SizedBox(height: 24),
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  Widget _buildNoMatchView() {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search_off_rounded, size: 72, color: Colors.white12),
-            const SizedBox(height: 24),
-            const Text("Couldn't identify the book",
-              style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            const Text(
-              'The scanned text didn\'t match any book.\n\n'
-              'Tips:\n• Scan text-heavy pages (chapters, not cover)\n'
-              '• Good lighting, no blur\n'
-              '• Latin/European alphabet works best\n'
-              '• Try 2–3 additional pages',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white54, fontSize: 13, height: 1.7)),
-            const SizedBox(height: 40),
-            ElevatedButton.icon(
-              onPressed: () => setState(() {
-                _noMatch = false;
-                _showTips = false;
-                _status = '${_capturedPaths.length}/$_maxPages pages. Add more or identify.';
-              }),
-              icon: const Icon(Icons.add_a_photo_outlined),
-              label: const Text('SCAN MORE PAGES'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextButton(
-              onPressed: _reset,
-              child: const Text('Start Over', style: TextStyle(color: Colors.white38)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  Widget _buildResultView() {
-    final book = _result!;
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: _reset,
-              child: Row(children: [
-                const Icon(Icons.arrow_back, color: Colors.white54),
-                const SizedBox(width: 8),
-                const Text('Scan Again', style: TextStyle(color: Colors.white54, fontSize: 14)),
-              ]),
-            ),
-            const SizedBox(height: 24),
-
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppTheme.border),
-              ),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: book.coverUrl != null
-                        ? Image.network(book.coverUrl!, width: 76, height: 106, fit: BoxFit.cover)
-                        : Container(width: 76, height: 106, color: AppTheme.surfaceHighlight,
-                            child: const Icon(Icons.book, color: Colors.white24, size: 32)),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(book.title, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 6),
-                        Text(book.author, style: const TextStyle(color: Colors.white54, fontSize: 13)),
-                        if (book.isbn != null) ...[
-                          const SizedBox(height: 4),
-                          Text('ISBN: ${book.isbn}', style: const TextStyle(color: Colors.white30, fontSize: 10, fontFamily: 'monospace')),
-                        ],
-                      ],
+              // Stats card
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: AppTheme.border),
+                ),
+                child: Row(children: [
+                  const Icon(Icons.text_snippet_outlined, color: AppTheme.accent, size: 28),
+                  const SizedBox(width: 14),
+                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(
+                      '${_extractedWords.length} words extracted',
+                      style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      'from ${_capturedPaths.length} scanned ${_capturedPaths.length == 1 ? 'page' : 'pages'}',
+                      style: const TextStyle(color: AppTheme.textDim, fontSize: 13),
+                    ),
+                  ]),
+                ]),
               ),
-            ),
+              const SizedBox(height: 20),
 
-            if (book.description != null) ...[
-              const SizedBox(height: 14),
-              Text(
-                book.description!.length > 300 ? '${book.description!.substring(0, 300)}…' : book.description!,
-                style: const TextStyle(color: Colors.white54, fontSize: 12, height: 1.6)),
+              // Title input
+              const Text('BOOK TITLE', style: TextStyle(
+                color: AppTheme.textDim, fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              TextField(
+                controller: _bookTitleCtrl,
+                style: const TextStyle(color: AppTheme.text),
+                decoration: InputDecoration(
+                  hintText: 'Optional — leave blank for auto title',
+                  hintStyle: const TextStyle(color: AppTheme.textDim),
+                  filled: true,
+                  fillColor: AppTheme.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: AppTheme.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: AppTheme.border),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Text preview
+              if (_extractedWords.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: Text(
+                    _extractedWords.take(40).join(' ') + (_extractedWords.length > 40 ? '…' : ''),
+                    style: const TextStyle(color: AppTheme.textDim, fontSize: 12, height: 1.6, fontFamily: 'Georgia'),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+
+              const Spacer(),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _saveAndRead(_extractedWords),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                  label: const Text(
+                    'SAVE & READ NOW',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    await _saveAndRead(_extractedWords);
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.text,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    side: const BorderSide(color: AppTheme.border),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                  child: const Text('ADD TO LIBRARY ONLY',
+                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                ),
+              ),
+              const SizedBox(height: 8),
             ],
-
-            const Spacer(),
-
-            const Text('GET THE DIGITAL VERSION',
-              style: TextStyle(color: Colors.white30, fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            Row(children: [
-              Expanded(child: _buyButton('Buy E-Book', Icons.menu_book_rounded, AppTheme.primary,
-                () => _openStore('${book.title} ${book.author} ebook'))),
-              const SizedBox(width: 12),
-              Expanded(child: _buyButton('Audiobook', Icons.headphones, AppTheme.accent,
-                () => _openStore('${book.title} ${book.author} audiobook'))),
-            ]),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buyButton(String label, IconData icon, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.4)),
+  // ── Paste text fallback — when camera OCR not available ───────────────────
+  Widget _buildPasteTextView() {
+    return Scaffold(
+      backgroundColor: AppTheme.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              GestureDetector(
+                onTap: _reset,
+                child: const Row(children: [
+                  Icon(Icons.arrow_back, color: AppTheme.textDim, size: 18),
+                  SizedBox(width: 8),
+                  Text('Back to Scanner', style: TextStyle(color: AppTheme.textDim, fontSize: 14)),
+                ]),
+              ),
+              const SizedBox(height: 20),
+              const Icon(Icons.edit_note_rounded, color: AppTheme.accent, size: 40),
+              const SizedBox(height: 10),
+              const Text('Camera OCR not available',
+                style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              const Text(
+                'Paste or type the text you want to read at speed:',
+                style: TextStyle(color: AppTheme.textDim, fontSize: 13, height: 1.5)),
+              const SizedBox(height: 16),
+              Expanded(
+                child: TextField(
+                  controller: _pasteCtrl,
+                  maxLines: null,
+                  expands: true,
+                  autofocus: true,
+                  style: const TextStyle(color: AppTheme.text, fontSize: 14, height: 1.7),
+                  textAlignVertical: TextAlignVertical.top,
+                  decoration: InputDecoration(
+                    hintText: 'Paste your text here…',
+                    hintStyle: const TextStyle(color: AppTheme.textDim),
+                    filled: true,
+                    fillColor: AppTheme.surface,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppTheme.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppTheme.border),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                    ),
+                    contentPadding: const EdgeInsets.all(16),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final text = _pasteCtrl.text.trim();
+                    if (text.isEmpty) return;
+                    final words = text
+                        .split(RegExp(r'\s+'))
+                        .map((w) => w.trim())
+                        .where((w) => w.isNotEmpty && w.contains(RegExp(r'[a-zA-Z0-9\u00C0-\u024F]')))
+                        .toList();
+                    setState(() {
+                      _extractedWords = words;
+                      _showPasteView = false;
+                      _showSaveView = true;
+                    });
+                  },
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                  label: const Text('CONTINUE', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
-        child: Column(children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
-        ]),
       ),
     );
   }

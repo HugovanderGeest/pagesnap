@@ -22,7 +22,8 @@
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Peruse">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -31,16 +32,47 @@
 
   <title>Peruse</title>
   <link rel="manifest" href="manifest.json">
+
+  <!-- Tesseract.js — in-browser OCR, no API key needed -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <script>
+    // Wrapper Dart calls into – returns a Promise resolving to the OCR text string
+    window._runOcr = async function(blobUrl) {
+      try {
+        const { data } = await Tesseract.recognize(blobUrl, 'eng', { logger: () => {} });
+        return data.text || '';
+      } catch (e) {
+        return '';
+      }
+    };
+
+    // Fullscreen helpers called from the reader screen
+    window._enterFullscreen = function() {
+      var el = document.documentElement;
+      var p;
+      if (el.requestFullscreen) p = el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) p = Promise.resolve(el.webkitRequestFullscreen());
+      if (p) p.catch(function(){});
+      // Also lock orientation to landscape for Android immersive mode
+      try {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(function(){});
+        }
+      } catch(e) {}
+    };
+    window._exitFullscreen = function() {
+      if (document.fullscreenElement || document.webkitFullscreenElement) {
+        if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      }
+      try {
+        if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+      } catch(e) {}
+    };
+  </script>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const Color background = Color(0xFF0F172A);
-  static const Color surface = Color(0xFF1E293B);
-  static const Color surfaceHighlight = Color(0xFF334155);
-  static const Color primary = Color(0xFF3B82F6);
-  static const Color accent = Color(0xFFF59E0B);
-  static const Color text = Color(0xFFF8FAFC);
-  static const Color textDim = Color(0x99F8FAFC); // 60% opacity
-  static const Color border = Color(0x1AF8FAFC);  // 10% opacity
+  // Paper-white palette — warm off-white like aged book paper
+  static const Color background       = Color(0xFFF7F2EA); // warm parchment
+  static const Color surface          = Color(0xFFEEE8DC); // slightly deeper paper
+  static const Color surfaceHighlight = Color(0xFFE4DDD0); // pressed / hover state
+  static const Color primary          = Color(0xFF1D4ED8); // blue-700 (readable on light)
+  static const Color accent           = Color(0xFFB45309); // amber-700 (readable on light)
+  static const Color text             = Color(0xFF1C1917); // stone-900
+  static const Color textDim          = Color(0xFF78716C); // stone-500
+  static const Color border           = Color(0xFFCFC8BB); // warm gray divider
 
-  static ThemeData get darkTheme {
+  static ThemeData get lightTheme {
     return ThemeData(
-      brightness: Brightness.dark,
+      brightness: Brightness.light,
       scaffoldBackgroundColor: background,
       primaryColor: primary,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: primary,
-        background: background,
         surface: surface,
       ),
       textTheme: const TextTheme(
@@ -27,6 +27,12 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         elevation: 0,
+        foregroundColor: text,
+        iconTheme: IconThemeData(color: text),
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: Color(0xFF1C1917),
+        contentTextStyle: TextStyle(color: Color(0xFFF7F2EA)),
       ),
     );
   }
