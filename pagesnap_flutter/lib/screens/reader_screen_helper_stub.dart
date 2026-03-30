@@ -1,0 +1,2 @@
+void enterWebFullscreen() {}
+void exitWebFullscreen() {}

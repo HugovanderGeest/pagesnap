@@ -7,14 +7,26 @@ platform :ios do
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
-      is_key_content_base64: false,
+      key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT_BASE64"],
+      is_key_content_base64: true,
       in_house: false
     )
 
-    # App already created manually
-    cert        # Automatically create or fetch the distribution certificate
-    sigh        # Automatically create or fetch the provisioning profile
+    # Use `match` (preferred) when a Match git repo is provided to avoid creating
+    # new distribution certificates on the Apple Developer account (Apple limits).
+    # Set `MATCH_GIT_URL` and optionally `MATCH_READONLY` in CI secrets.
+    if ENV['MATCH_GIT_URL'] && !ENV['MATCH_GIT_URL'].empty?
+      match(
+        type: 'appstore',
+        git_url: ENV['MATCH_GIT_URL'],
+        readonly: ENV['MATCH_READONLY'] == 'true',
+        app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app']
+      )
+    else
+      # Fallback: try to create/fetch certs (may fail if account reached cert limits)
+      cert
+      sigh
+    end
     
     # Run flutter build
     sh("cd ../.. && flutter build ios --release --no-codesign")

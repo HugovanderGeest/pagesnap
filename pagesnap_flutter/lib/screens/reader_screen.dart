@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:js_interop';
-import 'dart:js_interop_unsafe';
+import 'reader_screen_helper_stub.dart'
+    if (dart.library.html) 'reader_screen_web_helper.dart';
 import '../models/book.dart';
 import '../services/book_store.dart';
 import '../services/sync_service.dart';
 import '../widgets/rsvp_engine.dart';
-import '../theme/colors.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String bookId;
@@ -39,15 +38,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
   }
 
   void _enterWebFullscreen() {
-    try {
-      globalContext.callMethod<JSAny?>('_enterFullscreen'.toJS);
-    } catch (_) {}
+    if (kIsWeb) {
+      enterWebFullscreen();
+    }
   }
 
   void _exitWebFullscreen() {
-    try {
-      globalContext.callMethod<JSAny?>('_exitFullscreen'.toJS);
-    } catch (_) {}
+    if (kIsWeb) {
+      exitWebFullscreen();
+    }
   }
 
   void _toggleFullscreen() {
