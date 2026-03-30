@@ -31,12 +31,26 @@ platform :ios do
     # Run flutter build
     sh("cd ../.. && flutter build ios --release --no-codesign")
 
+    # Update the project to use the downloaded profile
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      path: "Runner.xcodeproj"
+    )
+
+    update_project_provisioning(
+      xcodeproj: "Runner.xcodeproj",
+      profile: ENV["SIGH_PROFILE_PATH"],
+      target_filter: "Runner",
+      build_configuration: "Release"
+    )
+
     # Build the workspace
     build_app(
       scheme: "Runner",
       workspace: "Runner.xcworkspace",
       output_directory: "build",
-      export_method: "app-store"
+      export_method: "app-store",
+      xcargs: "PROVISIONING_PROFILE_SPECIFIER='#{ENV["SIGH_PROFILE_ID"]}'"
     )
 
     upload_to_testflight(skip_waiting_for_build_processing: true)
