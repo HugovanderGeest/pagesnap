@@ -12,12 +12,7 @@ platform :ios do
       in_house: false
     )
 
-    produce(
-      app_name: "Peruse",
-      language: "English",
-      app_identifier: "one.peruse.app"
-    )
-
+    # App already created manually
     cert        # Automatically create or fetch the distribution certificate
     sigh        # Automatically create or fetch the provisioning profile
     
