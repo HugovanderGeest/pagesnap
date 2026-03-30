@@ -26,6 +26,13 @@ platform :ios do
       # Fallback: try to create/fetch certs (may fail if account reached cert limits)
       cert
       sigh
+      # Also fetch development to satisfy Xcode's manual signing requirements for some targets
+      begin
+        get_certificates(type: "development")
+        get_provisioning_profile(type: "development")
+      rescue
+        # Ignore failure if development cert limit is reached; we mainly need Distribution
+      end
     end
     
     # Run flutter build
