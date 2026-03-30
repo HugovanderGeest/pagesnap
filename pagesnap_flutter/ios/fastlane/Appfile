@@ -1,1 +1,1 @@
-app_identifier("com.peruse.app") # The bundle identifier of your app
+app_identifier("one.peruse.app") # The bundle identifier of your app

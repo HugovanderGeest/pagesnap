@@ -15,7 +15,7 @@ platform :ios do
     produce(
       app_name: "Peruse",
       language: "English",
-      app_identifier: "com.peruse.app"
+      app_identifier: "one.peruse.app"
     )
 
     cert        # Automatically create or fetch the distribution certificate
