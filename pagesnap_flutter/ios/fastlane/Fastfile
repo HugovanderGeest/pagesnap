@@ -57,7 +57,7 @@ platform :ios do
       workspace: "Runner.xcworkspace",
       output_directory: "build",
       export_method: "app-store",
-      xcargs: "PROVISIONING_PROFILE_SPECIFIER='#{ENV["SIGH_PROFILE_ID"]}'"
+      xcargs: "PROVISIONING_PROFILE_SPECIFIER='#{ENV["SIGH_PROFILE_ID"]}' CODE_SIGN_IDENTITY='Apple Distribution'"
     )
 
     upload_to_testflight(skip_waiting_for_build_processing: true)
