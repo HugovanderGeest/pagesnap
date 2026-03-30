@@ -1,0 +1,8 @@
+# Sample Matchfile — you can tune these values or pass them via Fastfile
+
+git_url("https://github.com/your-org/ios-certs.git")
+private_key_url("https://"
+)
+app_identifier(["one.peruse.app"]) 
+username("")
+readonly(false)
