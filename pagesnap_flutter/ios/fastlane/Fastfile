@@ -19,7 +19,7 @@ platform :ios do
       type: 'appstore',
       git_url: ENV['MATCH_GIT_URL'],
       git_branch: ENV['MATCH_GIT_BRANCH'] || 'match_keys',
-      readonly: ENV['MATCH_READONLY'] == 'true',
+      readonly: false,
       app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app']
     )
     
