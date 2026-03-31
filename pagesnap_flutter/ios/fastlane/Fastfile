@@ -3,34 +3,9 @@ default_platform(:ios)
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
-    # Create and use a dedicated CI keychain when a KEYCHAIN_PASSWORD is provided.
-    # This avoids trying to modify the system `login.keychain-db` password
-    # which on runners can cause SecKeychainItemSetAccessWithPassword errors.
-    ci_keychain = "ci.keychain"
-    if ENV['KEYCHAIN_PASSWORD'] && !ENV['KEYCHAIN_PASSWORD'].empty?
-      create_keychain(
-        name: ci_keychain,
-        password: ENV['KEYCHAIN_PASSWORD'],
-        default_keychain: true,
-        unlock: true,
-        timeout: 3600
-      )
-
-      set_keychain_settings(
-        keychain_name: ci_keychain
-      )
-    else
-      # Fallback: unlock the default login keychain (may be read-only on some runners)
-      unlock_keychain(
-        path: "login.keychain-db",
-        password: ENV['KEYCHAIN_PASSWORD'] || ""
-      )
-
-      set_keychain_settings(
-        keychain_name: "login.keychain-db"
-      )
-      ci_keychain = "login.keychain-db"
-    end
+    # Standard Fastlane setup for CI environments (creates and unlocks a temporary keychain)
+    setup_ci
+    
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
@@ -53,8 +28,13 @@ platform :ios do
       )
     else
       # Fallback: try to create/fetch certs (may fail if account reached cert limits)
-      cert(keychain_name: ci_keychain, keychain_password: ENV['KEYCHAIN_PASSWORD'])
-      sigh(keychain_name: ci_keychain, keychain_password: ENV['KEYCHAIN_PASSWORD'])
+      cert(
+        keychain_path: ENV["MATCH_KEYCHAIN_NAME"],
+        keychain_password: ENV["MATCH_KEYCHAIN_PASSWORD"]
+      )
+      sigh(
+        keychain_path: ENV["MATCH_KEYCHAIN_NAME"]
+      )
     end
     
     # Run flutter build (no codesign here; Xcode will sign during export)
