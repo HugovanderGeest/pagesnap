@@ -4,8 +4,8 @@ platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
     
-    # Ensure the keychain is ready for CI and unlocked to avoid hangs
-    setup_ci
+    # Unlock the default login keychain on the macOS runner
+    unlock_keychain(path: "login.keychain-db", password: "", add_to_search_list: true)
     
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
@@ -27,20 +27,11 @@ platform :ios do
       )
     else
       # Fallback: try to create/fetch certs (may fail if account reached cert limits)
-      cert(
-        keychain_path: ENV["MATCH_KEYCHAIN_NAME"],
-        keychain_password: ENV["MATCH_KEYCHAIN_PASSWORD"]
-      )
-      sigh(
-        keychain_path: ENV["MATCH_KEYCHAIN_NAME"]
-      )
+      cert
+      sigh
       # Also fetch development to satisfy Xcode's manual signing requirements for some targets
       begin
-        get_certificates(
-          type: "development",
-          keychain_path: ENV["MATCH_KEYCHAIN_NAME"],
-          keychain_password: ENV["MATCH_KEYCHAIN_PASSWORD"]
-        )
+        get_certificates(type: "development")
         get_provisioning_profile(type: "development")
       rescue
         # Ignore failure if development cert limit is reached; we mainly need Distribution
