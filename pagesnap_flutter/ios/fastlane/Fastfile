@@ -27,11 +27,20 @@ platform :ios do
       )
     else
       # Fallback: try to create/fetch certs (may fail if account reached cert limits)
-      cert
-      sigh
+      cert(
+        keychain_path: ENV["MATCH_KEYCHAIN_NAME"],
+        keychain_password: ENV["MATCH_KEYCHAIN_PASSWORD"]
+      )
+      sigh(
+        keychain_path: ENV["MATCH_KEYCHAIN_NAME"]
+      )
       # Also fetch development to satisfy Xcode's manual signing requirements for some targets
       begin
-        get_certificates(type: "development")
+        get_certificates(
+          type: "development",
+          keychain_path: ENV["MATCH_KEYCHAIN_NAME"],
+          keychain_password: ENV["MATCH_KEYCHAIN_PASSWORD"]
+        )
         get_provisioning_profile(type: "development")
       rescue
         # Ignore failure if development cert limit is reached; we mainly need Distribution
