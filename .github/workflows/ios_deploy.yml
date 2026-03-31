@@ -28,6 +28,10 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_KEY_CONTENT_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT_BASE64 }}
         run: |
+          if [ -z "$APP_STORE_CONNECT_KEY_ID" ] || [ -z "$APP_STORE_CONNECT_KEY_CONTENT_BASE64" ]; then
+            echo "::error::APP_STORE_CONNECT_KEY_ID or APP_STORE_CONNECT_KEY_CONTENT_BASE64 secret is missing or empty!"
+            exit 1
+          fi
           mkdir -p ~/.appstoreconnect/private_keys/
           printf "%s" "$APP_STORE_CONNECT_KEY_CONTENT_BASE64" > ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8
 
@@ -37,6 +41,8 @@ jobs:
 
       - name: Debug Fastlane environment
         working-directory: pagesnap_flutter/ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
         run: |
           echo "Listing App Store Connect key file:"
           ls -la ~/.appstoreconnect/private_keys || true
