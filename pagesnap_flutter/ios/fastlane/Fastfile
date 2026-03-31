@@ -61,12 +61,18 @@ platform :ios do
     sh("cd ../.. && flutter build ios --release --no-codesign")
 
     # Build the workspace — pass explicit signing args to avoid interactive prompts
+    # Only include PROVISIONING_PROFILE_SPECIFIER if SIGH_PROFILE_ID is provided.
+    xcargs = "CODE_SIGN_IDENTITY='Apple Distribution'"
+    if ENV['SIGH_PROFILE_ID'] && !ENV['SIGH_PROFILE_ID'].empty?
+      xcargs += " PROVISIONING_PROFILE_SPECIFIER='#{ENV['SIGH_PROFILE_ID']}'"
+    end
+
     build_app(
       scheme: "Runner",
       workspace: "Runner.xcworkspace",
       output_directory: "build",
       export_method: "app-store",
-      xcargs: "CODE_SIGN_IDENTITY='Apple Distribution' PROVISIONING_PROFILE_SPECIFIER='#{ENV['SIGH_PROFILE_ID']}'",
+      xcargs: xcargs,
       clean: true,
       verbose: true
     )
