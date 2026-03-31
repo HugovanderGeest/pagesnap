@@ -4,6 +4,9 @@ platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
     
+    # Ensure the keychain is ready for CI and unlocked to avoid hangs
+    setup_ci
+    
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
