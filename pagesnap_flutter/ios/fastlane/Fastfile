@@ -13,21 +13,15 @@ platform :ios do
       in_house: false
     )
 
-    # Use `match` (preferred) when a Match git repo is provided to avoid creating
-    # new distribution certificates on the Apple Developer account (Apple limits).
-    # Set `MATCH_GIT_URL` and optionally `MATCH_READONLY` in CI secrets.
-    if ENV['MATCH_GIT_URL'] && !ENV['MATCH_GIT_URL'].empty?
-      match(
-        type: 'appstore',
-        git_url: ENV['MATCH_GIT_URL'],
-        readonly: ENV['MATCH_READONLY'] == 'true',
-        app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app']
-      )
-    else
-      # Fallback: try to create/fetch certs (may fail if account reached cert limits)
-      cert
-      sigh
-    end
+    # Use match to automatically generate, encrypt, and store certificates
+    # within an isolated branch ('match_keys') of this same repository.
+    match(
+      type: 'appstore',
+      git_url: ENV['MATCH_GIT_URL'],
+      git_branch: ENV['MATCH_GIT_BRANCH'] || 'match_keys',
+      readonly: ENV['MATCH_READONLY'] == 'true',
+      app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app']
+    )
     
     # Run flutter build (no codesign here; Xcode will sign during export)
     sh("cd ../.. && flutter build ios --release --no-codesign")

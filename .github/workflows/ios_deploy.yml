@@ -9,6 +9,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repository
@@ -63,9 +65,10 @@ jobs:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
           SIGH_PROFILE_ID: ${{ secrets.SIGH_PROFILE_ID }}
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          MATCH_READONLY: ${{ secrets.MATCH_READONLY }}
+          MATCH_GIT_URL: "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+          MATCH_GIT_BRANCH: "match_keys"
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD || 'default_pagesnap_match_password_123!' }}
+          MATCH_READONLY: false
         run: |
           set -o pipefail
           fastlane beta 2>&1 | tee fastlane.log
