@@ -35,6 +35,20 @@ jobs:
         working-directory: pagesnap_flutter/ios
         run: sudo gem install fastlane
 
+      - name: Debug Fastlane environment
+        working-directory: pagesnap_flutter/ios
+        run: |
+          echo "Listing App Store Connect key file:"
+          ls -la ~/.appstoreconnect/private_keys || true
+          echo "Which fastlane (path or gem):"
+          which fastlane || gem which fastlane || true
+          echo "Fastlane version:"
+          fastlane --version || true
+          echo "Ruby version:"
+          ruby -v || true
+          echo "Relevant env vars:"
+          env | egrep 'APP_STORE|KEYCHAIN|MATCH|SIGH' || true
+
       - name: Run Fastlane Beta
         working-directory: pagesnap_flutter/ios
         env:
