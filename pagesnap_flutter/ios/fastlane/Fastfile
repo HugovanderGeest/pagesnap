@@ -27,10 +27,14 @@ platform :ios do
     sh("cd ../.. && flutter build ios --release --no-codesign")
 
     # Build the workspace — pass explicit signing args to avoid interactive prompts
-    # Only include PROVISIONING_PROFILE_SPECIFIER if SIGH_PROFILE_ID is provided.
-    xcargs = "CODE_SIGN_IDENTITY='Apple Distribution'"
-    if ENV['SIGH_PROFILE_ID'] && !ENV['SIGH_PROFILE_ID'].empty?
-      xcargs += " PROVISIONING_PROFILE_SPECIFIER='#{ENV['SIGH_PROFILE_ID']}'"
+    # Match automatically exports the generated Provisioning Profile name in the Environment.
+    # We grab it here and pass it to xcodebuild so manual signing knows exactly what to pull.
+    app_id = ENV['APP_IDENTIFIER'] || 'one.peruse.app'
+    profile_name = ENV["sigh_#{app_id}_appstore_profile-name"] || ENV['SIGH_PROFILE_ID']
+    
+    xcargs = "CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY='Apple Distribution'"
+    if profile_name && !profile_name.empty?
+      xcargs += " PROVISIONING_PROFILE_SPECIFIER='#{profile_name}'"
     end
 
     build_app(
@@ -38,6 +42,11 @@ platform :ios do
       workspace: "Runner.xcworkspace",
       output_directory: "build",
       export_method: "app-store",
+      export_options: {
+        provisioningProfiles: {
+          app_id => profile_name
+        }
+      },
       xcargs: xcargs,
       clean: true,
       verbose: true
