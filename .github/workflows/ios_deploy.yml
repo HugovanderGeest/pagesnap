@@ -33,7 +33,7 @@ jobs:
 
       - name: Install dependencies in iOS directory
         working-directory: pagesnap_flutter/ios
-        run: sudo gem install fastlane
+        run: sudo gem install fastlane -n /usr/local/bin
 
       - name: Debug Fastlane environment
         working-directory: pagesnap_flutter/ios
