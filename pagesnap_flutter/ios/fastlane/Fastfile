@@ -3,10 +3,15 @@ default_platform(:ios)
 platform :ios do
   desc "Push a new beta build to TestFlight"
   lane :beta do
-    
-    # Unlock the default login keychain on the macOS runner
-    unlock_keychain(path: "login.keychain-db", password: "", add_to_search_list: true)
-    
+    # Ensure the default login keychain is unlocked in CI so cert import doesn't prompt
+    unlock_keychain(
+      path: "login.keychain-db",
+      password: ENV['KEYCHAIN_PASSWORD'] || ""
+    )
+
+    set_keychain_settings(
+      keychain_name: "login.keychain-db"
+    )
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
@@ -23,44 +28,27 @@ platform :ios do
         type: 'appstore',
         git_url: ENV['MATCH_GIT_URL'],
         readonly: ENV['MATCH_READONLY'] == 'true',
-        app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app']
+        app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app'],
+        keychain_password: ENV['KEYCHAIN_PASSWORD']
       )
     else
       # Fallback: try to create/fetch certs (may fail if account reached cert limits)
-      cert
-      sigh
-      # Also fetch development to satisfy Xcode's manual signing requirements for some targets
-      begin
-        get_certificates(type: "development")
-        get_provisioning_profile(type: "development")
-      rescue
-        # Ignore failure if development cert limit is reached; we mainly need Distribution
-      end
+      cert(keychain_password: ENV['KEYCHAIN_PASSWORD'])
+      sigh(keychain_password: ENV['KEYCHAIN_PASSWORD'])
     end
     
-    # Run flutter build
+    # Run flutter build (no codesign here; Xcode will sign during export)
     sh("cd ../.. && flutter build ios --release --no-codesign")
 
-    # Update the project to use the downloaded profile
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path: "Runner.xcodeproj"
-    )
-
-    update_project_provisioning(
-      xcodeproj: "Runner.xcodeproj",
-      profile: ENV["SIGH_PROFILE_PATH"],
-      target_filter: "Runner",
-      build_configuration: "Release"
-    )
-
-    # Build the workspace
+    # Build the workspace — pass explicit signing args to avoid interactive prompts
     build_app(
       scheme: "Runner",
       workspace: "Runner.xcworkspace",
       output_directory: "build",
       export_method: "app-store",
-      xcargs: "PROVISIONING_PROFILE_SPECIFIER='#{ENV["SIGH_PROFILE_ID"]}' CODE_SIGN_IDENTITY='Apple Distribution'"
+      xcargs: "CODE_SIGN_IDENTITY='Apple Distribution' PROVISIONING_PROFILE_SPECIFIER='#{ENV['SIGH_PROFILE_ID']}'",
+      clean: true,
+      verbose: true
     )
 
     upload_to_testflight(skip_waiting_for_build_processing: true)
