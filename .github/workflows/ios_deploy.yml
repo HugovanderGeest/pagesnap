@@ -2,6 +2,9 @@ name: iOS TestFlight Deployment
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - Website
 
 jobs:
   build:
