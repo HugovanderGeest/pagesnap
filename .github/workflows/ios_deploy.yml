@@ -49,7 +49,7 @@ jobs:
           echo "Relevant env vars:"
           env | egrep 'APP_STORE|KEYCHAIN|MATCH|SIGH' || true
 
-      - name: Run Fastlane Beta
+      - name: Run Fastlane Beta (capture logs)
         working-directory: pagesnap_flutter/ios
         env:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -60,4 +60,13 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_READONLY: ${{ secrets.MATCH_READONLY }}
-        run: fastlane beta
+        run: |
+          set -o pipefail
+          fastlane beta 2>&1 | tee fastlane.log
+
+      - name: Upload Fastlane logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fastlane-logs-${{ github.run_id }}
+          path: pagesnap_flutter/ios/fastlane.log
