@@ -40,9 +40,10 @@ jobs:
         run: |
           echo "Listing App Store Connect key file:"
           ls -la ~/.appstoreconnect/private_keys || true
-          echo "Which fastlane (path or gem):"
-          which fastlane || gem which fastlane || true
-          echo "Fastlane version:"
+          echo "Checking API Key file size (should be ~150-170 bytes):"
+          ls -l ~/.appstoreconnect/private_keys/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8 || true
+          echo "Relevant env vars:"
+          env | egrep 'APP_STORE|KEYCHAIN|MATCH|SIGH' || true
           fastlane --version || true
           echo "Ruby version:"
           ruby -v || true
