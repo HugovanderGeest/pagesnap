@@ -21,19 +21,12 @@ platform :ios do
         type: 'appstore',
         git_url: ENV['MATCH_GIT_URL'],
         readonly: ENV['MATCH_READONLY'] == 'true',
-        app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app'],
-        keychain_name: ci_keychain,
-        keychain_password: ENV['KEYCHAIN_PASSWORD']
+        app_identifier: [ENV['APP_IDENTIFIER'] || 'one.peruse.app']
       )
     else
       # Fallback: try to create/fetch certs (may fail if account reached cert limits)
-      cert(
-        keychain_path: ENV["MATCH_KEYCHAIN_NAME"],
-        keychain_password: ENV["MATCH_KEYCHAIN_PASSWORD"]
-      )
-      sigh(
-        keychain_path: ENV["MATCH_KEYCHAIN_NAME"]
-      )
+      cert
+      sigh
     end
     
     # Run flutter build (no codesign here; Xcode will sign during export)
