@@ -37,59 +37,8 @@ class PeruseApp extends StatelessWidget {
         Locale('en', ''),
         Locale('nl', ''),
       ],
-      home: const MainTabs(),
+      home: const LibraryScreen(),
       debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-class MainTabs extends StatefulWidget {
-  const MainTabs({Key? key}) : super(key: key);
-
-  @override
-  State<MainTabs> createState() => _MainTabsState();
-}
-
-class _MainTabsState extends State<MainTabs> {
-  int _currentIndex = 0;
-  final List<Widget> _screens = [
-    LibraryScreen(),
-    AccountScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          color: AppTheme.background,
-          border: Border(top: BorderSide(color: AppTheme.border, width: 0.5)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: AppTheme.primary,
-          unselectedItemColor: AppTheme.textDim,
-          showSelectedLabels: false,
-          showUnselectedLabels: false,
-          onTap: (index) => setState(() => _currentIndex = index),
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.library),
-              label: 'Library',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(LucideIcons.user),
-              label: 'Account',
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

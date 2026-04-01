@@ -8,6 +8,7 @@ import '../services/epub_extractor.dart';
 import '../services/pdf_extractor.dart';
 import 'reader_screen.dart';
 import 'scanner_screen.dart';
+import 'account_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   @override
@@ -132,8 +133,22 @@ class _LibraryScreenState extends State<LibraryScreen> {
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: AppTheme.border),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                 backgroundColor: AppTheme.surface,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            InkWell(
+                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AccountScreen())),
+                              borderRadius: BorderRadius.circular(24),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: AppTheme.border),
+                                  shape: BoxShape.circle,
+                                  color: AppTheme.surface,
+                                ),
+                                child: const Icon(LucideIcons.user, size: 18, color: AppTheme.text),
                               ),
                             ),
                           ],
