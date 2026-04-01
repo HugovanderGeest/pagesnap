@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:camera/camera.dart';
+import 'package:image_cropper/image_cropper.dart';
 import '../services/ocr_service.dart';
 import '../services/scan_counter.dart';
 import '../services/book_store.dart';
@@ -44,6 +46,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
     super.initState();
     _initCamera();
     _loadScanCount();
+    _startTipsTimer();
+  }
+
+  Timer? _tipsTimer;
+
+  void _startTipsTimer() {
+    _tipsTimer?.cancel();
+    _tipsTimer = Timer(const Duration(seconds: 4), () {
+      if (mounted) setState(() => _showTips = false);
+    });
   }
 
   Future<void> _loadScanCount() async {
@@ -76,6 +88,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   void dispose() {
+    _tipsTimer?.cancel();
     _controller?.dispose();
     _ocr.dispose();
     _bookTitleCtrl.dispose();
@@ -94,18 +107,38 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
 
     final file = await _controller!.takePicture();
-    setState(() {
-      _capturedPaths.add(file.path);
-      _showTips = false;
-      _status = '${_capturedPaths.length}/$_maxPages pages captured. '
-          '${_capturedPaths.length < _maxPages ? 'Scan another or tap Identify.' : 'Tap Identify to find your book!'}';
-    });
 
-    // Count only scans by guests
-    if (!ScanCounter.isLoggedIn) {
-      await ScanCounter.increment();
-      final updated = await ScanCounter.getCount();
-      if (mounted) setState(() => _totalScanned = updated);
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: file.path,
+      compressFormat: ImageCompressFormat.jpg,
+      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+            toolbarTitle: 'Crop Text Area',
+            toolbarColor: AppTheme.background,
+            toolbarWidgetColor: Colors.white,
+            initAspectRatio: CropAspectRatioPreset.original,
+            lockAspectRatio: false),
+        IOSUiSettings(
+          title: 'Crop Text Area',
+        ),
+      ],
+    );
+
+    if (croppedFile != null) {
+      setState(() {
+        _capturedPaths.add(croppedFile.path);
+        _showTips = false;
+        _status = '${_capturedPaths.length}/$_maxPages pages captured. '
+            '${_capturedPaths.length < _maxPages ? 'Scan another or tap Identify.' : 'Tap Identify to find your book!'}';
+      });
+
+      // Count only scans by guests
+      if (!ScanCounter.isLoggedIn) {
+        await ScanCounter.increment();
+        final updated = await ScanCounter.getCount();
+        if (mounted) setState(() => _totalScanned = updated);
+      }
     }
   }
 
@@ -208,6 +241,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _pasteCtrl.clear();
       _status = 'Align the page inside the frame and tap the shutter';
     });
+    _startTipsTimer();
   }
 
   @override
@@ -316,8 +350,25 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 const Expanded(
                   child: Text('Book Scanner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
                 ),
-                // Camera switch button
-                if (_cameras.length > 1)
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _showTips = !_showTips;
+                      if (_showTips) _startTipsTimer();
+                    });
+                  },
+                  child: Container(
+                    width: 38, height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.black45,
+                      borderRadius: BorderRadius.circular(19),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Icon(Icons.lightbulb_outline, color: _showTips ? const Color(0xFFF59E0B) : Colors.white, size: 18),
+                  ),
+                ),
+                if (_cameras.length > 1) ...[
+                  const SizedBox(width: 8),
                   GestureDetector(
                     onTap: _switchCamera,
                     child: Container(

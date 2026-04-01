@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'theme/colors.dart';
 import 'screens/library_screen.dart';
 import 'screens/account_screen.dart';
+import 'l10n/app_localizations.dart';
 
 const supabaseUrl = const String.fromEnvironment('SUPABASE_URL',
     defaultValue: 'https://mzfunjkzvszwtiqyorsk.supabase.co');
@@ -25,6 +27,16 @@ class PeruseApp extends StatelessWidget {
     return MaterialApp(
       title: 'Peruse',
       theme: AppTheme.lightTheme,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('nl', ''),
+      ],
       home: const MainTabs(),
       debugShowCheckedModeBanner: false,
     );
