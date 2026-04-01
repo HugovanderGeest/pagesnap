@@ -3,7 +3,7 @@
     "short_name": "Peruse",
     "start_url": ".",
     "display": "fullscreen",
-    "background_color": "#0F172A",
+    "background_color": "#FFFFFF",
     "theme_color": "#1D4ED8",
     "description": "Read smarter with RSVP speed reading.",
     "orientation": "any",

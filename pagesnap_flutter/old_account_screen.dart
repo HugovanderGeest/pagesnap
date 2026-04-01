@@ -1,7 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:crypto/crypto.dart';
-import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/colors.dart';
@@ -89,58 +86,6 @@ class _AccountScreenState extends State<AccountScreen> {
     }
   }
 
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      // Using simple OAuth web flow (no google-services.json needed locally)
-      // Make sure Google is enabled in Supabase Dashboard > Auth > Providers
-      await Supabase.instance.client.auth.signInWithOAuth(OAuthProvider.google);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Google Sign In Error: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithApple() async {
-    setState(() => _isLoading = true);
-    try {
-      final rawNonce = Supabase.instance.client.auth.generateRawNonce();
-      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
-
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-        nonce: hashedNonce,
-      );
-
-      final idToken = credential.identityToken;
-      if (idToken == null) {
-        throw const AuthException('Could not find ID Token from Apple');
-      }
-
-      await Supabase.instance.client.auth.signInWithIdToken(
-        provider: OAuthProvider.apple,
-        idToken: idToken,
-        nonce: rawNonce,
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text('Apple Sign In Error: $e')),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
   Future<void> _signOut() async {
     await Supabase.instance.client.auth.signOut();
   }
@@ -169,25 +114,29 @@ class _AccountScreenState extends State<AccountScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.arrow_back, color: AppTheme.textDim, size: 24),
-                ),
-                const SizedBox(width: 16),
-                const Text(
-                  'Account',
-                  style: TextStyle(
-                    color: AppTheme.text,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 16),
+            const Text(
+              'PERUSE',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.text,
+                fontSize: 40,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -2,
+              ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 4),
+            const Text(
+              'SYNC YOUR PROGRESS.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: AppTheme.accent,
+                fontSize: 11,
+                letterSpacing: 3,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 24),
 
             // Free scan counter
             Container(
@@ -328,47 +277,6 @@ class _AccountScreenState extends State<AccountScreen> {
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1),
               ),
             ),
-            const SizedBox(height: 24),
-            
-            // Or Divider
-            Row(
-              children: [
-                Expanded(child: Divider(color: AppTheme.border)),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('OR', style: TextStyle(color: AppTheme.textDim, fontSize: 12)),
-                ),
-                Expanded(child: Divider(color: AppTheme.border)),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Google Button
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : _signInWithGoogle,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.all(16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              icon: Image.network('https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg', width: 22, height: 22),
-              label: const Text('Sign in with Google', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            ),
-            const SizedBox(height: 12),
-
-            // Apple Button
-            ElevatedButton.icon(
-              onPressed: _isLoading ? null : _signInWithApple,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.all(16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              icon: const Icon(Icons.apple, size: 26),
-              label: const Text('Sign in with Apple', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -385,14 +293,6 @@ class _AccountScreenState extends State<AccountScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.of(context).pop(),
-                  child: const Icon(Icons.arrow_back, color: AppTheme.textDim, size: 24),
-                ),
-              ],
-            ),
             const SizedBox(height: 16),
             // Avatar + email header
             Row(
@@ -401,7 +301,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                  color: AppTheme.primary.withOpacity(0.12),
+                  color: AppTheme.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(LucideIcons.user, color: AppTheme.primary, size: 26),
