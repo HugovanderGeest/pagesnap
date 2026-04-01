@@ -16,8 +16,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Force Xcode 15.4
-        run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+      - name: Force Xcode 15 dynamically
+        run: |
+          XCODE_PATH=$(ls -d /Applications/Xcode_15*.app | sort -V | tail -1)
+          if [ -z "$XCODE_PATH" ]; then echo "No Xcode 15 found!"; exit 1; fi
+          echo "Selecting Xcode from: $XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
