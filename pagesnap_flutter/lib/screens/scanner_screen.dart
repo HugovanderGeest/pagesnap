@@ -128,7 +128,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
           initAspectRatio: CropAspectRatioPreset.original,
           lockAspectRatio: false,
         ),
-        IOSUiSettings(title: 'Crop Text Area'),
+        IOSUiSettings(
+             title: 'Crop Text Area',
+             aspectRatioPickerButtonHidden: false,
+             resetButtonHidden: false,
+             doneButtonTitle: 'Done',
+             cancelButtonTitle: 'Cancel',
+        ),
       ],
     );
 

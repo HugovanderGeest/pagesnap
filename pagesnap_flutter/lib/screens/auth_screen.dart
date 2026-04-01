@@ -233,32 +233,27 @@ class _AuthScreenState extends State<AuthScreen> {
               ],
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : _signInWithApple,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      side: const BorderSide(color: AppTheme.border),
-                    ),
-                    child: const Icon(Icons.apple, color: AppTheme.text, size: 26),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _isLoading ? null : _signInWithGoogle,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      side: const BorderSide(color: AppTheme.border),
-                    ),
-                    child: const Text('G', style: TextStyle(color: AppTheme.text, fontSize: 20, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+            SignInWithAppleButton(
+              onPressed: _isLoading ? null : _signInWithApple,
+              style: SignInWithAppleButtonStyle.black,
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+               onPressed: _isLoading ? null : _signInWithGoogle,
+               style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  side: const BorderSide(color: AppTheme.border),
+               ),
+               child: Row(
+                 mainAxisAlignment: MainAxisAlignment.center,
+                 children: [
+                    Image.network('https://www.google.com/favicon.ico', height: 20),
+                    const SizedBox(width: 12),
+                    const Text('Continue with Google', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.w600)),
+                 ],
+               ),
             ),
           ],
         ),
