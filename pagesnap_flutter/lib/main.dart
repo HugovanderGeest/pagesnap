@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:lucide_icons/lucide_icons.dart';
 import 'theme/colors.dart';
 import 'screens/library_screen.dart';
-import 'screens/account_screen.dart';
 import 'l10n/app_localizations.dart';
 
-const supabaseUrl = const String.fromEnvironment('SUPABASE_URL',
+const supabaseUrl = String.fromEnvironment('SUPABASE_URL',
     defaultValue: 'https://mzfunjkzvszwtiqyorsk.supabase.co');
-const supabaseAnonKey = const String.fromEnvironment('SUPABASE_ANON_KEY',
+const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY',
     defaultValue:
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16ZnVuamt6dnN6d3RpcXlvcnNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMTc5NTMsImV4cCI6MjA4NzY5Mzk1M30.e4deWQ5W3s0Nwa-t8fhL-UGANSVG70IGqN81JBERk7o');
 

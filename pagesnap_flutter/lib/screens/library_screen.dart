@@ -11,6 +11,8 @@ import 'scanner_screen.dart';
 import 'account_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
+  const LibraryScreen({super.key});
+
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
 }
