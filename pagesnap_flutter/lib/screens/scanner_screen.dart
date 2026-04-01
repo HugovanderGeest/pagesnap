@@ -19,7 +19,7 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen> {
   CameraController? _controller;
   List<CameraDescription> _cameras = [];
-  int _cameraIndex = 0;          // which camera is active
+  int _cameraIndex = 0; // which camera is active
   final List<String> _capturedPaths = [];
   final OcrService _ocr = OcrService();
 
@@ -74,9 +74,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   Future<void> _startCamera(int index) async {
     await _controller?.dispose();
-    _controller = CameraController(_cameras[index], ResolutionPreset.medium, enableAudio: false);
+    _controller = CameraController(
+      _cameras[index],
+      ResolutionPreset.medium,
+      enableAudio: false,
+    );
     await _controller!.initialize();
-    if (mounted) setState(() { _isInitialized = true; _cameraIndex = index; });
+    if (mounted)
+      setState(() {
+        _isInitialized = true;
+        _cameraIndex = index;
+      });
   }
 
   Future<void> _switchCamera() async {
@@ -114,14 +122,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
       compressQuality: 90,
       uiSettings: [
         AndroidUiSettings(
-            toolbarTitle: 'Crop Text Area',
-            toolbarColor: AppTheme.background,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false),
-        IOSUiSettings(
-          title: 'Crop Text Area',
+          toolbarTitle: 'Crop Text Area',
+          toolbarColor: AppTheme.background,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
         ),
+        IOSUiSettings(title: 'Crop Text Area'),
       ],
     );
 
@@ -129,7 +136,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       setState(() {
         _capturedPaths.add(croppedFile.path);
         _showTips = false;
-        _status = '${_capturedPaths.length}/$_maxPages pages captured. '
+        _status =
+            '${_capturedPaths.length}/$_maxPages pages captured. '
             '${_capturedPaths.length < _maxPages ? 'Scan another or tap Identify.' : 'Tap Identify to find your book!'}';
       });
 
@@ -160,17 +168,22 @@ class _ScannerScreenState extends State<ScannerScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Not now', style: TextStyle(color: AppTheme.textDim)),
+            child: const Text(
+              'Not now',
+              style: TextStyle(color: AppTheme.textDim),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(ctx);   // close dialog
+              Navigator.pop(ctx); // close dialog
               Navigator.pop(context); // close scanner — Account tab is waiting
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
             ),
             child: const Text('Create free account →'),
           ),
@@ -181,19 +194,26 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   Future<void> _identify() async {
     if (_capturedPaths.isEmpty) return;
-    setState(() { _isProcessing = true; _status = 'Reading text from images…'; });
+    setState(() {
+      _isProcessing = true;
+      _status = 'Reading text from images…';
+    });
     try {
       final text = await _ocr.extractTextFromImages(_capturedPaths);
       final words = text
           .split(RegExp(r'\s+'))
           .map((w) => w.trim())
-          .where((w) => w.isNotEmpty && w.contains(RegExp(r'[a-zA-Z0-9\u00C0-\u024F]')))
+          .where(
+            (w) =>
+                w.isNotEmpty && w.contains(RegExp(r'[a-zA-Z0-9\u00C0-\u024F]')),
+          )
           .toList();
       setState(() {
         _isProcessing = false;
         _extractedWords = words;
         _showSaveView = true;
-        _status = '${words.length} words extracted from ${_capturedPaths.length} pages';
+        _status =
+            '${words.length} words extracted from ${_capturedPaths.length} pages';
       });
     } on UnsupportedError {
       setState(() {
@@ -202,7 +222,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
         _status = 'Paste the text you want to read';
       });
     } catch (e) {
-      setState(() { _isProcessing = false; _status = 'Could not read text: $e'; });
+      setState(() {
+        _isProcessing = false;
+        _status = 'Could not read text: $e';
+      });
     }
   }
 
@@ -254,10 +277,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     } else {
       body = _buildScannerView();
     }
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: body,
-    );
+    return Scaffold(backgroundColor: Colors.black, body: body);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -269,7 +289,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         if (_isInitialized && _controller != null)
           SizedBox.expand(
             child: FittedBox(
-              fit: BoxFit.contain,          // NOT cover — avoids zoom
+              fit: BoxFit.contain, // NOT cover — avoids zoom
               child: SizedBox(
                 width: _controller!.value.previewSize?.height ?? 1,
                 height: _controller!.value.previewSize?.width ?? 1,
@@ -280,7 +300,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
         else
           Container(
             color: Colors.black,
-            child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+            child: const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
           ),
 
         // ── Frame guide ───────────────────────────────────────────────────────
@@ -290,7 +312,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
         if (_showTips)
           Positioned(
             top: MediaQuery.of(context).padding.top + 72,
-            left: 24, right: 24,
+            left: 24,
+            right: 24,
             child: Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -301,18 +324,37 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(children: [
-                    Icon(Icons.lightbulb_outline, color: Color(0xFFF59E0B), size: 15),
-                    SizedBox(width: 8),
-                    Text('SCANNING TIPS', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 2)),
-                  ]),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        color: Color(0xFFF59E0B),
+                        size: 15,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'SCANNING TIPS',
+                        style: TextStyle(
+                          color: Color(0xFFF59E0B),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(height: 8),
                   Text(
                     '• Good lighting — avoid shadows\n'
                     '• Hold the phone steady above the page\n'
                     '• Scan text-heavy pages (not the cover)\n'
                     '• Latin/European alphabet works best',
-                    style: TextStyle(color: Colors.white70, fontSize: 11, height: 1.6)),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      height: 1.6,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -320,16 +362,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
         // ── Top bar ───────────────────────────────────────────────────────────
         Positioned(
-          top: 0, left: 0, right: 0,
+          top: 0,
+          left: 0,
+          right: 0,
           child: Container(
             padding: EdgeInsets.only(
               top: MediaQuery.of(context).padding.top + 10,
-              left: 16, right: 16, bottom: 10,
+              left: 16,
+              right: 16,
+              bottom: 10,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Colors.black.withOpacity(0.6), Colors.transparent],
-                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
             child: Row(
@@ -337,18 +384,30 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    width: 38, height: 38,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: Colors.black45,
                       borderRadius: BorderRadius.circular(19),
                       border: Border.all(color: Colors.white24),
                     ),
-                    child: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.arrow_back,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
                 const Expanded(
-                  child: Text('Book Scanner', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
+                  child: Text(
+                    'Book Scanner',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                  ),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -358,13 +417,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     });
                   },
                   child: Container(
-                    width: 38, height: 38,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: Colors.black45,
                       borderRadius: BorderRadius.circular(19),
                       border: Border.all(color: Colors.white24),
                     ),
-                    child: Icon(Icons.lightbulb_outline, color: _showTips ? const Color(0xFFF59E0B) : Colors.white, size: 18),
+                    child: Icon(
+                      Icons.lightbulb_outline,
+                      color: _showTips ? const Color(0xFFF59E0B) : Colors.white,
+                      size: 18,
+                    ),
                   ),
                 ),
                 if (_cameras.length > 1) ...[
@@ -372,15 +436,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   GestureDetector(
                     onTap: _switchCamera,
                     child: Container(
-                      width: 38, height: 38,
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: Colors.black45,
                         borderRadius: BorderRadius.circular(19),
                         border: Border.all(color: Colors.white24),
                       ),
-                      child: const Icon(Icons.flip_camera_ios, color: Colors.white, size: 18),
+                      child: const Icon(
+                        Icons.flip_camera_ios,
+                        color: Colors.white,
+                        size: 18,
+                      ),
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -388,17 +458,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
         // ── Bottom controls ───────────────────────────────────────────────────
         Positioned(
-          bottom: 0, left: 0, right: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
           child: Container(
             padding: EdgeInsets.only(
               top: 20,
               bottom: MediaQuery.of(context).padding.bottom + 20,
-              left: 24, right: 24,
+              left: 24,
+              right: 24,
             ),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Colors.transparent, Colors.black.withOpacity(0.88)],
-                begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
             child: Column(
@@ -406,27 +480,40 @@ class _ScannerScreenState extends State<ScannerScreen> {
               children: [
                 // Status pill
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.black54,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white24),
                   ),
-                  child: Text(_status, textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  child: Text(
+                    _status,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
                 ),
                 const SizedBox(height: 14),
 
                 // Page dots
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_maxPages, (i) => Container(
-                    width: 16, height: 4, margin: const EdgeInsets.symmetric(horizontal: 2),
-                    decoration: BoxDecoration(
-                      color: i < _capturedPaths.length ? const Color(0xFFF59E0B) : Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
+                  children: List.generate(
+                    _maxPages,
+                    (i) => Container(
+                      width: 16,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(horizontal: 2),
+                      decoration: BoxDecoration(
+                        color: i < _capturedPaths.length
+                            ? const Color(0xFFF59E0B)
+                            : Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
-                  )),
+                  ),
                 ),
                 const SizedBox(height: 18),
 
@@ -434,26 +521,49 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    _actionButton(Icons.refresh, 'Reset', Colors.white10,
-                      _capturedPaths.isNotEmpty ? _reset : null),
+                    _actionButton(
+                      Icons.refresh,
+                      'Reset',
+                      Colors.white10,
+                      _capturedPaths.isNotEmpty ? _reset : null,
+                    ),
 
                     GestureDetector(
-                      onTap: _isProcessing || _capturedPaths.length >= _maxPages ? null : _capture,
+                      onTap: _isProcessing || _capturedPaths.length >= _maxPages
+                          ? null
+                          : _capture,
                       child: Container(
-                        width: 72, height: 72,
+                        width: 72,
+                        height: 72,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppTheme.primary,
-                          boxShadow: [BoxShadow(color: AppTheme.primary.withOpacity(0.5), blurRadius: 18, spreadRadius: 3)],
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primary.withOpacity(0.5),
+                              blurRadius: 18,
+                              spreadRadius: 3,
+                            ),
+                          ],
                         ),
-                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 28),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ),
                     ),
 
-                    _actionButton(Icons.search, 'Identify',
+                    _actionButton(
+                      Icons.search,
+                      'Identify',
                       AppTheme.accent.withOpacity(0.2),
-                      _capturedPaths.isNotEmpty && !_isProcessing ? _identify : null,
-                      textColor: AppTheme.accent, iconColor: AppTheme.accent),
+                      _capturedPaths.isNotEmpty && !_isProcessing
+                          ? _identify
+                          : null,
+                      textColor: AppTheme.accent,
+                      iconColor: AppTheme.accent,
+                    ),
                   ],
                 ),
               ],
@@ -470,8 +580,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
               children: [
                 CircularProgressIndicator(color: AppTheme.accent),
                 const SizedBox(height: 20),
-                Text(_status, style: const TextStyle(color: Colors.white, fontSize: 15),
-                  textAlign: TextAlign.center),
+                Text(
+                  _status,
+                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),
@@ -491,11 +604,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
             children: [
               GestureDetector(
                 onTap: _reset,
-                child: const Row(children: [
-                  Icon(Icons.arrow_back, color: AppTheme.textDim, size: 18),
-                  SizedBox(width: 8),
-                  Text('Scan Again', style: TextStyle(color: AppTheme.textDim, fontSize: 14)),
-                ]),
+                child: const Row(
+                  children: [
+                    Icon(Icons.arrow_back, color: AppTheme.textDim, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Scan Again',
+                      style: TextStyle(color: AppTheme.textDim, fontSize: 14),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
 
@@ -507,27 +625,50 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(color: AppTheme.border),
                 ),
-                child: Row(children: [
-                  const Icon(Icons.text_snippet_outlined, color: AppTheme.accent, size: 28),
-                  const SizedBox(width: 14),
-                  Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Text(
-                      '${_extractedWords.length} words extracted',
-                      style: const TextStyle(color: AppTheme.text, fontSize: 16, fontWeight: FontWeight.bold),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.text_snippet_outlined,
+                      color: AppTheme.accent,
+                      size: 28,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'from ${_capturedPaths.length} scanned ${_capturedPaths.length == 1 ? 'page' : 'pages'}',
-                      style: const TextStyle(color: AppTheme.textDim, fontSize: 13),
+                    const SizedBox(width: 14),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_extractedWords.length} words extracted',
+                          style: const TextStyle(
+                            color: AppTheme.text,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'from ${_capturedPaths.length} scanned ${_capturedPaths.length == 1 ? 'page' : 'pages'}',
+                          style: const TextStyle(
+                            color: AppTheme.textDim,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
                     ),
-                  ]),
-                ]),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
 
               // Title input
-              const Text('BOOK TITLE', style: TextStyle(
-                color: AppTheme.textDim, fontSize: 10, letterSpacing: 2, fontWeight: FontWeight.bold)),
+              const Text(
+                'BOOK TITLE',
+                style: TextStyle(
+                  color: AppTheme.textDim,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
               TextField(
                 controller: _bookTitleCtrl,
@@ -547,9 +688,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
-                    borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                    borderSide: const BorderSide(
+                      color: AppTheme.primary,
+                      width: 1.5,
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -564,8 +711,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     border: Border.all(color: AppTheme.border),
                   ),
                   child: Text(
-                    _extractedWords.take(40).join(' ') + (_extractedWords.length > 40 ? '…' : ''),
-                    style: const TextStyle(color: AppTheme.textDim, fontSize: 12, height: 1.6, fontFamily: 'Georgia'),
+                    _extractedWords.take(40).join(' ') +
+                        (_extractedWords.length > 40 ? '…' : ''),
+                    style: const TextStyle(
+                      color: AppTheme.textDim,
+                      fontSize: 12,
+                      height: 1.6,
+                      fontFamily: 'Georgia',
+                    ),
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -580,13 +733,19 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   icon: const Icon(Icons.play_arrow_rounded, size: 20),
                   label: const Text(
                     'SAVE & READ NOW',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 18),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
                 ),
               ),
@@ -601,10 +760,17 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     foregroundColor: AppTheme.text,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     side: const BorderSide(color: AppTheme.border),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
-                  child: const Text('ADD TO LIBRARY ONLY',
-                    style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  child: const Text(
+                    'ADD TO LIBRARY ONLY',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -627,21 +793,41 @@ class _ScannerScreenState extends State<ScannerScreen> {
             children: [
               GestureDetector(
                 onTap: _reset,
-                child: const Row(children: [
-                  Icon(Icons.arrow_back, color: AppTheme.textDim, size: 18),
-                  SizedBox(width: 8),
-                  Text('Back to Scanner', style: TextStyle(color: AppTheme.textDim, fontSize: 14)),
-                ]),
+                child: const Row(
+                  children: [
+                    Icon(Icons.arrow_back, color: AppTheme.textDim, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Back to Scanner',
+                      style: TextStyle(color: AppTheme.textDim, fontSize: 14),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
-              const Icon(Icons.edit_note_rounded, color: AppTheme.accent, size: 40),
+              const Icon(
+                Icons.edit_note_rounded,
+                color: AppTheme.accent,
+                size: 40,
+              ),
               const SizedBox(height: 10),
-              const Text('Camera OCR not available',
-                style: TextStyle(color: AppTheme.text, fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Camera OCR not available',
+                style: TextStyle(
+                  color: AppTheme.text,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 6),
               const Text(
                 'Paste or type the text you want to read at speed:',
-                style: TextStyle(color: AppTheme.textDim, fontSize: 13, height: 1.5)),
+                style: TextStyle(
+                  color: AppTheme.textDim,
+                  fontSize: 13,
+                  height: 1.5,
+                ),
+              ),
               const SizedBox(height: 16),
               Expanded(
                 child: TextField(
@@ -649,7 +835,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   maxLines: null,
                   expands: true,
                   autofocus: true,
-                  style: const TextStyle(color: AppTheme.text, fontSize: 14, height: 1.7),
+                  style: const TextStyle(
+                    color: AppTheme.text,
+                    fontSize: 14,
+                    height: 1.7,
+                  ),
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     hintText: 'Paste your text here…',
@@ -666,7 +856,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: AppTheme.primary,
+                        width: 1.5,
+                      ),
                     ),
                     contentPadding: const EdgeInsets.all(16),
                   ),
@@ -682,7 +875,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     final words = text
                         .split(RegExp(r'\s+'))
                         .map((w) => w.trim())
-                        .where((w) => w.isNotEmpty && w.contains(RegExp(r'[a-zA-Z0-9\u00C0-\u024F]')))
+                        .where(
+                          (w) =>
+                              w.isNotEmpty &&
+                              w.contains(RegExp(r'[a-zA-Z0-9\u00C0-\u024F]')),
+                        )
                         .toList();
                     setState(() {
                       _extractedWords = words;
@@ -691,12 +888,20 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     });
                   },
                   icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('CONTINUE', style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1)),
+                  label: const Text(
+                    'CONTINUE',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1,
+                    ),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                   ),
                 ),
               ),
@@ -708,8 +913,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
   }
 
-  Widget _actionButton(IconData icon, String label, Color bg, VoidCallback? onTap,
-      {Color? textColor, Color? iconColor}) {
+  Widget _actionButton(
+    IconData icon,
+    String label,
+    Color bg,
+    VoidCallback? onTap, {
+    Color? textColor,
+    Color? iconColor,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Opacity(
@@ -721,11 +932,20 @@ class _ScannerScreenState extends State<ScannerScreen> {
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: Colors.white24),
           ),
-          child: Column(children: [
-            Icon(icon, color: iconColor ?? Colors.white54, size: 20),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: textColor ?? Colors.white54, fontSize: 11, fontWeight: FontWeight.bold)),
-          ]),
+          child: Column(
+            children: [
+              Icon(icon, color: iconColor ?? Colors.white54, size: 20),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: textColor ?? Colors.white54,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -748,12 +968,30 @@ class _ScanOverlayPainter extends CustomPainter {
     );
 
     const cornerLen = 26.0;
-    for (final corner in [
-      [rect.topLeft, const Offset(cornerLen, 0), const Offset(0, cornerLen)],
-      [rect.topRight, const Offset(-cornerLen, 0), const Offset(0, cornerLen)],
-      [rect.bottomLeft, const Offset(cornerLen, 0), const Offset(0, -cornerLen)],
-      [rect.bottomRight, const Offset(-cornerLen, 0), const Offset(0, -cornerLen)],
-    ] as List<List<Offset>>) {
+    for (final corner
+        in [
+              [
+                rect.topLeft,
+                const Offset(cornerLen, 0),
+                const Offset(0, cornerLen),
+              ],
+              [
+                rect.topRight,
+                const Offset(-cornerLen, 0),
+                const Offset(0, cornerLen),
+              ],
+              [
+                rect.bottomLeft,
+                const Offset(cornerLen, 0),
+                const Offset(0, -cornerLen),
+              ],
+              [
+                rect.bottomRight,
+                const Offset(-cornerLen, 0),
+                const Offset(0, -cornerLen),
+              ],
+            ]
+            as List<List<Offset>>) {
       canvas.drawLine(corner[0], corner[0] + corner[1], paint);
       canvas.drawLine(corner[0], corner[0] + corner[2], paint);
     }
