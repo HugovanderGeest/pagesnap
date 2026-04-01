@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:image_cropper/image_cropper.dart';
 import '../services/ocr_service.dart';
@@ -31,6 +32,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   // After OCR succeeds:
   List<String> _extractedWords = [];
   bool _showSaveView = false;
+  String? _previewImagePath;
   final TextEditingController _bookTitleCtrl = TextEditingController();
 
   // Fallback: user pastes text manually
@@ -114,10 +116,46 @@ class _ScannerScreenState extends State<ScannerScreen> {
       return;
     }
 
-    final file = await _controller!.takePicture();
+    try {
+      if (mounted) {
+        setState(() {
+          _status = 'Capturing...';
+        });
+      }
 
+      final file = await _controller!.takePicture();
+      
+      setState(() {
+        _previewImagePath = file.path;
+      });
+    } catch (e) {
+      setState(() => _status = 'Error taking picture: $e');
+    }
+  }
+
+  Future<void> _confirmPreview(String path) async {
+    setState(() {
+      _capturedPaths.add(path);
+      _previewImagePath = null;
+      _showTips = false;
+      _status =
+          '${_capturedPaths.length}/$_maxPages pages captured. '
+          '${_capturedPaths.length < _maxPages ? 'Scan another or tap Identify.' : 'Tap Identify to find your book!'}';
+    });
+    
+    // Count only scans by guests
+    if (!ScanCounter.isLoggedIn) {
+      await ScanCounter.increment();
+      final updated = await ScanCounter.getCount();
+      if (mounted) setState(() => _totalScanned = updated);
+    }
+  }
+
+  Future<void> _cropPreview() async {
+    if (_previewImagePath == null) return;
+    
     final croppedFile = await ImageCropper().cropImage(
-      sourcePath: file.path,
+      sourcePath: _previewImagePath!,
       compressFormat: ImageCompressFormat.jpg,
       compressQuality: 90,
       uiSettings: [
@@ -138,21 +176,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
       ],
     );
 
-    if (croppedFile != null) {
-      setState(() {
-        _capturedPaths.add(croppedFile.path);
-        _showTips = false;
-        _status =
-            '${_capturedPaths.length}/$_maxPages pages captured. '
-            '${_capturedPaths.length < _maxPages ? 'Scan another or tap Identify.' : 'Tap Identify to find your book!'}';
-      });
-
-      // Count only scans by guests
-      if (!ScanCounter.isLoggedIn) {
-        await ScanCounter.increment();
-        final updated = await ScanCounter.getCount();
-        if (mounted) setState(() => _totalScanned = updated);
-      }
+    if (croppedFile != null && mounted) {
+      _confirmPreview(croppedFile.path);
     }
   }
 
@@ -280,10 +305,68 @@ class _ScannerScreenState extends State<ScannerScreen> {
       body = _buildPasteTextView();
     } else if (_showSaveView) {
       body = _buildSaveBookView();
+    } else if (_previewImagePath != null) {
+      body = _buildPreviewView();
     } else {
       body = _buildScannerView();
     }
     return Scaffold(backgroundColor: Colors.black, body: body);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  Widget _buildPreviewView() {
+    return Stack(
+      children: [
+        Positioned.fill(
+           child: Image.file(
+             File(_previewImagePath!),
+             fit: BoxFit.contain,
+           ),
+        ),
+        Positioned(
+          bottom: 0, left: 0, right: 0,
+          child: Container(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).padding.bottom + 20, 
+              top: 40, 
+              left: 20, 
+              right: 20
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.transparent, Colors.black87],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              )
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => setState(() => _previewImagePath = null),
+                  child: const Text('Retake', style: TextStyle(color: Colors.white, fontSize: 16)),
+                ),
+                TextButton.icon(
+                  onPressed: _cropPreview,
+                  icon: const Icon(Icons.crop, color: Colors.white),
+                  label: const Text('Crop', style: TextStyle(color: Colors.white, fontSize: 16)),
+                ),
+                ElevatedButton(
+                  onPressed: () => _confirmPreview(_previewImagePath!),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
+                  ),
+                  child: const Text('Looks Good', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ],
+            ),
+          ),
+        )
+      ],
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
