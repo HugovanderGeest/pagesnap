@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:crypto/crypto.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/colors.dart';
@@ -90,6 +93,50 @@ class _AccountScreenState extends State<AccountScreen> {
     await Supabase.instance.client.auth.signOut();
   }
 
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isLoading = true);
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: 'one.peruse.app://login-callback',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google Sign In Error')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _signInWithApple() async {
+    setState(() => _isLoading = true);
+    try {
+      final rawNonce = Supabase.instance.client.auth.generateRawNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [AppleIDAuthorizationScopes.email, AppleIDAuthorizationScopes.fullName],
+        nonce: hashedNonce,
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) throw Exception('Could not retrieve Apple ID token.');
+
+      await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Apple Sign In Error: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   void dispose() {
     _emailCtrl.dispose();
@@ -107,178 +154,132 @@ class _AccountScreenState extends State<AccountScreen> {
 
   // ─────────────────────────────────────────────────────────────────────────────
   Widget _buildAuthView() {
-    final scansLeft = (ScanCounter.freeLimit - _scansUsed).clamp(0, ScanCounter.freeLimit);
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 16),
-            const Text(
-              'PERUSE',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.text,
-                fontSize: 40,
-                fontWeight: FontWeight.w900,
-                letterSpacing: -2,
+    return Scaffold(
+      backgroundColor: const Color(0xFFF2F2F7), // iOS grouped background color
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF2F2F7),
+        elevation: 0,
+        centerTitle: true,
+        leadingWidth: 80,
+        leading: TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel', style: TextStyle(color: Colors.blue, fontSize: 17)),
+        ),
+        title: const Text('Welcome', style: TextStyle(color: Colors.black, fontSize: 17, fontWeight: FontWeight.w600)),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(),
+              
+              // Google Button
+              ElevatedButton(
+                onPressed: _isLoading ? null : _signInWithGoogle,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black54,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.network('https://www.google.com/favicon.ico', height: 20, errorBuilder: (c,e,s) => const Icon(LucideIcons.chrome, size: 20, color: Colors.blue)),
+                    const SizedBox(width: 8),
+                    const Text('Sign in with Google', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'SYNC YOUR PROGRESS.',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.accent,
-                fontSize: 11,
-                letterSpacing: 3,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 12),
 
-            // Free scan counter
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppTheme.surface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.border),
+              // Apple Button
+              ElevatedButton(
+                onPressed: _isLoading ? null : _signInWithApple,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(LucideIcons.apple, size: 20),
+                    SizedBox(width: 8),
+                    Text('Sign in with Apple', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  ],
+                ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.document_scanner_outlined, color: AppTheme.accent, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$_scansUsed / ${ScanCounter.freeLimit} free scans used',
-                          style: const TextStyle(
-                            color: AppTheme.text,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: _scansUsed / ScanCounter.freeLimit,
-                            backgroundColor: AppTheme.surfaceHighlight,
-                            color: scansLeft == 0 ? Colors.red.shade400 : AppTheme.accent,
-                            minHeight: 4,
-                          ),
-                        ),
-                      ],
-                    ),
+              const SizedBox(height: 12),
+
+              // Facebook Button
+              ElevatedButton(
+                onPressed: _isLoading ? null : () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B5998),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(LucideIcons.facebook, size: 20),
+                    SizedBox(width: 8),
+                    Text('Sign in with Facebook', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Twitter Button
+              ElevatedButton(
+                onPressed: _isLoading ? null : () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DA1F2),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 1,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(LucideIcons.twitter, size: 20),
+                    SizedBox(width: 8),
+                    Text('Sign in with Twitter', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+
+              const Spacer(),
+
+              // Footer Text
+              Padding(
+                padding: const EdgeInsets.only(bottom: 24),
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: const TextSpan(
+                    style: TextStyle(color: Colors.black54, fontSize: 12, height: 1.4),
+                    children: [
+                      TextSpan(text: 'By continuing, you are indicating that you accept our '),
+                      TextSpan(text: 'Terms of Service', style: TextStyle(color: Colors.blue)),
+                      TextSpan(text: ' and '),
+                      TextSpan(text: 'Privacy Policy', style: TextStyle(color: Colors.blue)),
+                      TextSpan(text: '.'),
+                    ],
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-            const Text(
-              'Sign in to unlock unlimited scans and keep your reading progress across devices.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppTheme.textDim, fontSize: 13, height: 1.6),
-            ),
-            const SizedBox(height: 32),
-
-            // Email field
-            TextField(
-              controller: _emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: AppTheme.text),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppTheme.surface,
-                hintText: 'Email',
-                hintStyle: const TextStyle(color: AppTheme.textDim),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppTheme.border),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppTheme.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-                ),
-                contentPadding: const EdgeInsets.all(20),
               ),
-            ),
-            const SizedBox(height: 14),
-
-            // Password field
-            TextField(
-              controller: _passCtrl,
-              obscureText: true,
-              style: const TextStyle(color: AppTheme.text),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppTheme.surface,
-                hintText: 'Password',
-                hintStyle: const TextStyle(color: AppTheme.textDim),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppTheme.border),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppTheme.border),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: const BorderSide(color: AppTheme.primary, width: 1.5),
-                ),
-                contentPadding: const EdgeInsets.all(20),
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            // Sign in
-            ElevatedButton(
-              onPressed: _isLoading ? null : _signIn,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.all(18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              child: _isLoading
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                    )
-                  : const Text(
-                      'SIGN IN',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1),
-                    ),
-            ),
-            const SizedBox(height: 14),
-
-            // Create account
-            OutlinedButton(
-              onPressed: _isLoading ? null : _signUp,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.text,
-                padding: const EdgeInsets.all(18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                side: const BorderSide(color: AppTheme.border),
-              ),
-              child: const Text(
-                'CREATE ACCOUNT',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, letterSpacing: 1),
-              ),
-            ),
-            const SizedBox(height: 16),
-          ],
+            ],
+          ),
         ),
       ),
     );

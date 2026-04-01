@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
-import 'package:image_cropper/image_cropper.dart';
 import '../services/ocr_service.dart';
 import '../services/scan_counter.dart';
 import '../services/book_store.dart';
@@ -151,36 +150,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
   }
 
-  Future<void> _cropPreview() async {
-    if (_previewImagePath == null) return;
-    
-    final croppedFile = await ImageCropper().cropImage(
-      sourcePath: _previewImagePath!,
-      compressFormat: ImageCompressFormat.jpg,
-      compressQuality: 90,
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: 'Crop Text Area',
-          toolbarColor: AppTheme.background,
-          toolbarWidgetColor: Colors.white,
-          initAspectRatio: CropAspectRatioPreset.original,
-          lockAspectRatio: false,
-        ),
-        IOSUiSettings(
-             title: 'Crop Text Area',
-             aspectRatioPickerButtonHidden: false,
-             resetButtonHidden: false,
-             doneButtonTitle: 'Done',
-             cancelButtonTitle: 'Cancel',
-        ),
-      ],
-    );
-
-    if (croppedFile != null && mounted) {
-      _confirmPreview(croppedFile.path);
-    }
-  }
-
   void _showPaywall() {
     showDialog(
       context: context,
@@ -315,57 +284,87 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   // ─────────────────────────────────────────────────────────────────────────────
   Widget _buildPreviewView() {
-    return Stack(
-      children: [
-        Positioned.fill(
-           child: Image.file(
-             File(_previewImagePath!),
-             fit: BoxFit.contain,
-           ),
-        ),
-        Positioned(
-          bottom: 0, left: 0, right: 0,
-          child: Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).padding.bottom + 20, 
-              top: 40, 
-              left: 20, 
-              right: 20
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.transparent, Colors.black87],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              )
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                TextButton(
-                  onPressed: () => setState(() => _previewImagePath = null),
-                  child: const Text('Retake', style: TextStyle(color: Colors.white, fontSize: 16)),
-                ),
-                TextButton.icon(
-                  onPressed: _cropPreview,
-                  icon: const Icon(Icons.crop, color: Colors.white),
-                  label: const Text('Crop', style: TextStyle(color: Colors.white, fontSize: 16)),
-                ),
-                ElevatedButton(
-                  onPressed: () => _confirmPreview(_previewImagePath!),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
-                  ),
-                  child: const Text('Looks Good', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                ),
-              ],
-            ),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Positioned.fill(
+             child: InteractiveViewer(
+               panEnabled: true,
+               minScale: 1.0,
+               maxScale: 4.0,
+               child: Image.file(
+                 File(_previewImagePath!),
+                 fit: BoxFit.contain,
+               ),
+             ),
           ),
-        )
-      ],
+          // Top bar
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, bottom: 24, left: 24, right: 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black87, Colors.transparent],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              ),
+              child: const Text('Review Page', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1), textAlign: TextAlign.center),
+            )
+          ),
+          
+          Positioned(
+            bottom: 0, left: 0, right: 0,
+            child: Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 24, 
+                top: 32, 
+                left: 24, 
+                right: 24
+              ),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.transparent, Colors.black87, Colors.black],
+                  stops: [0.0, 0.4, 1.0],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Our AI will automatically extract all visible text.', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => setState(() => _previewImagePath = null),
+                        icon: const Icon(Icons.refresh, color: Colors.white70, size: 20),
+                        label: const Text('RETAKE', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _confirmPreview(_previewImagePath!),
+                        icon: const Icon(Icons.check, size: 20),
+                        label: const Text('LOOKS GOOD', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          elevation: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          )
+        ],
+      )
     );
   }
 

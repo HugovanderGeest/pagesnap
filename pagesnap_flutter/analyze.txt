@@ -1,0 +1,45 @@
+Analyzing pagesnap_flutter...                                   
+
+   info - Parameter 'key' could be a super parameter - lib\main.dart:21:9 - use_super_parameters
+   info - Parameter 'key' could be a super parameter - lib\screens\account_screen.dart:12:9 - use_super_parameters
+warning - The value of the field '_scansUsed' isn't used - lib\screens\account_screen.dart:23:7 - unused_field
+warning - The declaration '_signIn' isn't referenced - lib\screens\account_screen.dart:43:16 - unused_element
+warning - The declaration '_signUp' isn't referenced - lib\screens\account_screen.dart:65:16 - unused_element
+   info - Parameter 'key' could be a super parameter - lib\screens\auth_screen.dart:9:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\library_screen.dart:127:66 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\library_screen.dart:222:76 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\library_screen.dart:259:78 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\library_screen.dart:315:72 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\screens\reader_screen.dart:13:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\reader_screen.dart:123:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\reader_screen.dart:125:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\reader_screen.dart:130:41 - deprecated_member_use
+   info - Parameter 'key' could be a super parameter - lib\screens\scanner_screen.dart:13:9 - use_super_parameters
+   info - Statements in an if should be enclosed in a block - lib\screens\scanner_screen.dart:85:7 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\scanner_screen.dart:408:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\scanner_screen.dart:410:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\scanner_screen.dart:465:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\scanner_screen.dart:561:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\scanner_screen.dart:631:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\scanner_screen.dart:648:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\scanner_screen.dart:1047:30 - deprecated_member_use
+warning - Unnecessary cast - lib\screens\scanner_screen.dart:1060:12 - unnecessary_cast
+   info - Don't invoke 'print' in production code - lib\services\book_store.dart:19:11 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\epub_extractor.dart:42:7 - avoid_print
+   info - 'dart:js' is deprecated and shouldn't be used. Use dart:js_interop instead - lib\services\ocr_platform_web.dart:4:1 - deprecated_member_use
+   info - Use 'isNotEmpty' instead of 'length' to test whether the collection is empty - lib\services\pdf_extractor.dart:19:25 - prefer_is_empty
+   info - Don't invoke 'print' in production code - lib\services\pdf_extractor.dart:28:7 - avoid_print
+   info - Parameter 'key' could be a super parameter - lib\widgets\rsvp_engine.dart:15:9 - use_super_parameters
+   info - The private field _isLightMode could be 'final' - lib\widgets\rsvp_engine.dart:40:8 - prefer_final_fields
+   info - The private field _fontFamily could be 'final' - lib\widgets\rsvp_engine.dart:44:10 - prefer_final_fields
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:189:94 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:190:95 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:290:58 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:316:37 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:323:68 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\widgets\rsvp_engine.dart:369:57 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:394:72 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:403:59 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:411:61 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\rsvp_engine.dart:436:53 - deprecated_member_use
+
