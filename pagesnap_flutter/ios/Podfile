@@ -45,4 +45,14 @@ post_install do |installer|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
     end
   end
+
+  # Hotfix for TOCropViewController compiling on Xcode 16 + iOS 18 SDK
+  file_path = File.join(installer.sandbox.root, 'TOCropViewController/Objective-C/TOCropViewController/TOCropViewController.m')
+  if File.exist?(file_path)
+    content = File.read(file_path)
+    content = content.gsub('UIViewLayoutRegion *layoutRegion =', '// UIViewLayoutRegion *layoutRegion =')
+    content = content.gsub('UIEdgeInsets edgeInsets = [self.view edgeInsetsForLayoutRegion:layoutRegion];', 'UIEdgeInsets edgeInsets = UIEdgeInsetsZero;')
+    content = content.gsub('layoutRegion = [UIViewLayoutRegion safeAreaLayoutRegionWithCornerAdaptation: UIViewLayoutRegionAdaptivityAxisVertical];', '')
+    File.write(file_path, content)
+  end
 end
