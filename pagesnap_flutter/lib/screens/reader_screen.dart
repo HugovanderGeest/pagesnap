@@ -10,7 +10,7 @@ import '../widgets/rsvp_engine.dart';
 
 class ReaderScreen extends StatefulWidget {
   final String bookId;
-  const ReaderScreen({Key? key, required this.bookId}) : super(key: key);
+  const ReaderScreen({super.key, required this.bookId});
 
   @override
   State<ReaderScreen> createState() => _ReaderScreenState();

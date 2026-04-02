@@ -18,7 +18,7 @@ Future<void> main() async {
 }
 
 class PeruseApp extends StatelessWidget {
-  const PeruseApp({Key? key}) : super(key: key);
+  const PeruseApp({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -16,7 +16,7 @@ class PdfExtractor {
           .replaceAll(RegExp(r'[^\w\s.,!?''"-]'), '')
           .trim()
           .split(' ')
-          .where((w) => w.length > 0)
+          .where((w) => w.isNotEmpty)
           .toList();
 
       if (words.length < 50) {

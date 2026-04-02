@@ -13,14 +13,14 @@ class RSVPEngine extends StatefulWidget {
   final VoidCallback? onFullscreen;
 
   const RSVPEngine({
-    Key? key,
+    super.key,
     required this.words,
     this.initialSpeed = 300,
     this.initialIndex = 0,
     required this.onProgress,
     required this.onCompletion,
     this.onFullscreen,
-  }) : super(key: key);
+  });
 
   @override
   State<RSVPEngine> createState() => _RSVPEngineState();
@@ -37,11 +37,11 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
   bool _controlsVisible = true;
   bool _showSettings = false;
   bool _isFullscreen = false;
-  bool _isLightMode = true;  // default to paper-white
+  final bool _isLightMode = true;  // default to paper-white
   double _fontSize = 48.0;
   Color _pivotColor = AppTheme.primary;
   bool _showContext = true;
-  String _fontFamily = 'Courier';
+  final String _fontFamily = 'Courier';
 
   @override
   void initState() {
@@ -366,7 +366,7 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                             const Spacer(),
                             Text('CONTEXT', style: TextStyle(fontSize: 10, color: dimColor)),
                             const SizedBox(width: 6),
-                            Switch(value: _showContext, activeColor: _pivotColor,
+                            Switch(value: _showContext, activeThumbColor: _pivotColor,
                               onChanged: (v) => setState(() => _showContext = v)),
                           ]),
                         ],

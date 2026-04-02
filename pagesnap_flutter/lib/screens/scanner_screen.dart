@@ -11,7 +11,7 @@ import '../theme/colors.dart';
 import 'reader_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
-  const ScannerScreen({Key? key}) : super(key: key);
+  const ScannerScreen({super.key});
 
   @override
   State<ScannerScreen> createState() => _ScannerScreenState();
@@ -32,6 +32,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   // After OCR succeeds:
   List<String> _extractedWords = [];
   bool _showSaveView = false;
+  String? _previewImagePath;
   final TextEditingController _bookTitleCtrl = TextEditingController();
 
   // Fallback: user pastes text manually
@@ -125,41 +126,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
       final file = await _controller!.takePicture();
       
-      final croppedFile = await ImageCropper().cropImage(
-        sourcePath: file.path,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Crop Image',
-            toolbarColor: AppTheme.primary,
-            toolbarWidgetColor: Colors.white,
-            initAspectRatio: CropAspectRatioPreset.original,
-            lockAspectRatio: false,
-          ),
-          IOSUiSettings(
-            title: 'Crop Image',
-            doneButtonTitle: 'Confirm',
-            cancelButtonTitle: 'Cancel',
-            aspectRatioPickerButtonHidden: true,
-            resetButtonHidden: true,
-          ),
-        ],
-      );
-
-      if (croppedFile != null) {
-        await _confirmPreview(croppedFile.path);
-      } else {
-        setState(() {
-           _status = 'Capture cancelled. Ready to scan.';
-        });
-      }
+      setState(() {
+        _previewImagePath = file.path;
+      });
     } catch (e) {
-      setState(() => _status = 'Error processing picture: $e');
+      setState(() => _status = 'Error taking picture: $e');
     }
   }
 
   Future<void> _confirmPreview(String path) async {
     setState(() {
       _capturedPaths.add(path);
+      _previewImagePath = null;
       _showTips = false;
       _status =
           '${_capturedPaths.length}/$_maxPages pages captured. '
@@ -171,6 +149,36 @@ class _ScannerScreenState extends State<ScannerScreen> {
       await ScanCounter.increment();
       final updated = await ScanCounter.getCount();
       if (mounted) setState(() => _totalScanned = updated);
+    }
+  }
+
+  Future<void> _cropPreview() async {
+    if (_previewImagePath == null) return;
+    
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: _previewImagePath!,
+      compressFormat: ImageCompressFormat.jpg,
+      compressQuality: 90,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Text Area',
+          toolbarColor: AppTheme.background,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+             title: 'Crop Text Area',
+             aspectRatioPickerButtonHidden: false,
+             resetButtonHidden: false,
+             doneButtonTitle: 'Done',
+             cancelButtonTitle: 'Cancel',
+        ),
+      ],
+    );
+
+    if (croppedFile != null && mounted) {
+      _confirmPreview(croppedFile.path);
     }
   }
 
@@ -298,10 +306,103 @@ class _ScannerScreenState extends State<ScannerScreen> {
       body = _buildPasteTextView();
     } else if (_showSaveView) {
       body = _buildSaveBookView();
+    } else if (_previewImagePath != null) {
+      body = _buildPreviewView();
     } else {
       body = _buildScannerView();
     }
     return Scaffold(backgroundColor: Colors.black, body: body);
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  Widget _buildPreviewView() {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Positioned.fill(
+             child: InteractiveViewer(
+               panEnabled: true,
+               minScale: 1.0,
+               maxScale: 4.0,
+               child: Image.file(
+                 File(_previewImagePath!),
+                 fit: BoxFit.contain,
+               ),
+             ),
+          ),
+          // Top bar
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 16, bottom: 24, left: 24, right: 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black87, Colors.transparent],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              ),
+              child: const Text('Review Page', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: 1), textAlign: TextAlign.center),
+            )
+          ),
+          
+          Positioned(
+            bottom: 0, left: 0, right: 0,
+            child: Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 24, 
+                top: 32, 
+                left: 24, 
+                right: 24
+              ),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.transparent, Colors.black87, Colors.black],
+                  stops: [0.0, 0.4, 1.0],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                )
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Our AI will automatically extract all visible text.', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => setState(() => _previewImagePath = null),
+                        icon: const Icon(Icons.refresh, color: Colors.white70, size: 20),
+                        label: const Text('RETAKE', style: TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      ),
+                      TextButton.icon(
+                        onPressed: _cropPreview,
+                        icon: const Icon(Icons.crop, color: Colors.white, size: 20),
+                        label: const Text('CROP', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _confirmPreview(_previewImagePath!),
+                        icon: const Icon(Icons.check, size: 20),
+                        label: const Text('LOOKS GOOD', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, letterSpacing: 1)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                          elevation: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          )
+        ],
+      )
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1014,8 +1115,7 @@ class _ScanOverlayPainter extends CustomPainter {
                 const Offset(-cornerLen, 0),
                 const Offset(0, -cornerLen),
               ],
-            ]
-            as List<List<Offset>>) {
+            ]) {
       canvas.drawLine(corner[0], corner[0] + corner[1], paint);
       canvas.drawLine(corner[0], corner[0] + corner[2], paint);
     }
