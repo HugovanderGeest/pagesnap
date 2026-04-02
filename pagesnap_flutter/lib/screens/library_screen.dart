@@ -118,18 +118,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           spacing: 16,
                           runSpacing: 8,
                           children: [
-                            const Text('Library', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1, color: AppTheme.text)),
+                            Image.asset('assets/logo.png', height: 32, width: 32),
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 OutlinedButton.icon(
                                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerScreen())),
                                   icon: const Icon(LucideIcons.camera, size: 16, color: AppTheme.accent),
-                                  label: const SizedBox.shrink(),
+                                  label: const Text('Scan', style: TextStyle(color: AppTheme.accent, fontWeight: FontWeight.bold, fontSize: 13)),
                                   style: OutlinedButton.styleFrom(
                                     side: const BorderSide(color: AppTheme.accent, width: 0.8),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                     backgroundColor: AppTheme.accent.withOpacity(0.08),
                                   ),
                                 ),
@@ -137,11 +137,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                 OutlinedButton.icon(
                                   onPressed: isLoading ? null : _handleImport,
                                   icon: const Icon(LucideIcons.plus, size: 16, color: AppTheme.primary),
-                                  label: const SizedBox.shrink(),
+                                  label: const Text('Import', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold, fontSize: 13)),
                                   style: OutlinedButton.styleFrom(
                                     side: const BorderSide(color: AppTheme.border),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     backgroundColor: AppTheme.surface,
                                   ),
                                 ),

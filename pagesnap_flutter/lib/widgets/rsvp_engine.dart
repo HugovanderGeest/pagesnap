@@ -356,45 +356,49 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                         ],
                       ),
                     ),
-                  // Playback bar
-                  Container(
-                    color: surfaceColor,
+                  // Playback bar (floating)
+                  Padding(
                     padding: EdgeInsets.only(
-                      top: 10, left: 24, right: 24,
-                      bottom: MediaQuery.of(context).padding.bottom + 10,
+                      left: 32, right: 32,
+                      bottom: MediaQuery.of(context).padding.bottom + 20,
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _iconBtn(LucideIcons.rotateCcw, _restart, dimColor, borderColor),
-                        const SizedBox(width: 28),
+                        _iconBtn(LucideIcons.rotateCcw, _restart, dimColor, borderColor, bg: surfaceColor.withOpacity(0.4)),
+                        
                         GestureDetector(
                           onTap: _togglePlay,
                           child: Container(
-                            width: 56, height: 56,
+                            width: 64, height: 64,
                             decoration: BoxDecoration(
-                              color: dimColor.withOpacity(0.1),
+                              color: _isPlaying ? surfaceColor.withOpacity(0.4) : _pivotColor.withOpacity(0.15),
                               shape: BoxShape.circle,
-                              border: Border.all(color: borderColor),
+                              border: Border.all(color: _isPlaying ? borderColor : _pivotColor.withOpacity(0.5)),
                             ),
-                            child: Icon(_isPlaying ? LucideIcons.pause : LucideIcons.play, color: dimColor.withOpacity(0.8), size: 22),
+                            child: Icon(_isPlaying ? LucideIcons.pause : LucideIcons.play, color: _isPlaying ? dimColor : _pivotColor, size: 28),
                           ),
                         ),
-                        const SizedBox(width: 28),
-                        _iconBtn(LucideIcons.settings, _toggleSettings,
-                          _showSettings ? _pivotColor : dimColor,
-                          _showSettings ? _pivotColor : borderColor,
-                          bg: _showSettings ? _pivotColor.withOpacity(0.15) : null),
-                        if (widget.onFullscreen != null) ...[  
-                          const SizedBox(width: 12),
-                          _iconBtn(
-                            _isFullscreen ? LucideIcons.minimize2 : LucideIcons.maximize2,
-                            _onFullscreenTap,
-                            _isFullscreen ? _pivotColor : dimColor,
-                            _isFullscreen ? _pivotColor : borderColor,
-                            bg: _isFullscreen ? _pivotColor.withOpacity(0.15) : null,
-                          ),
-                        ],
+                        
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (widget.onFullscreen != null) ...[  
+                              _iconBtn(
+                                _isFullscreen ? LucideIcons.minimize2 : LucideIcons.maximize2,
+                                _onFullscreenTap,
+                                _isFullscreen ? _pivotColor : dimColor,
+                                _isFullscreen ? _pivotColor : borderColor,
+                                bg: _isFullscreen ? _pivotColor.withOpacity(0.15) : surfaceColor.withOpacity(0.4),
+                              ),
+                              const SizedBox(width: 12),
+                            ],
+                            _iconBtn(LucideIcons.settings, _toggleSettings,
+                              _showSettings ? _pivotColor : dimColor,
+                              _showSettings ? _pivotColor : borderColor,
+                              bg: _showSettings ? _pivotColor.withOpacity(0.15) : surfaceColor.withOpacity(0.4)),
+                          ],
+                        ),
                       ],
                     ),
                   ),
