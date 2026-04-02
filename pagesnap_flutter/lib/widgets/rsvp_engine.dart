@@ -75,7 +75,6 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
       _scheduleHideControls();
     } else {
       _timer?.cancel();
-      _hideTimer?.cancel();
     }
   }
 
@@ -132,7 +131,7 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
     setState(() {
       _showSettings = !_showSettings;
       _controlsVisible = true;
-      if (_showSettings) { _isPlaying = false; _timer?.cancel(); _hideTimer?.cancel(); }
+      if (_showSettings) { _isPlaying = false; _timer?.cancel(); }
     });
   }
 
