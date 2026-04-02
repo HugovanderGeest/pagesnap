@@ -16,7 +16,9 @@ Future<String> performOcr(List<String> imagePaths) async {
   }
   textRecognizer.close();
   
-  final result = buffer.toString().trim();
+  final result = buffer.toString()
+      .replaceAll(RegExp(r'-{2,}'), ' ')
+      .trim();
   if (result.isEmpty) {
     throw Exception('No text could be detected. Try better lighting and hold the phone steady.');
   }

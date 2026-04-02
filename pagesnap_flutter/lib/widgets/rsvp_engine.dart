@@ -362,11 +362,37 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                       left: 32, right: 32,
                       bottom: MediaQuery.of(context).padding.bottom + 20,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        _iconBtn(LucideIcons.rotateCcw, _restart, dimColor, borderColor, bg: surfaceColor.withOpacity(0.4)),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _iconBtn(LucideIcons.rotateCcw, _restart, dimColor, borderColor, bg: surfaceColor.withOpacity(0.4)),
+                            
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (widget.onFullscreen != null) ...[  
+                                  _iconBtn(
+                                    _isFullscreen ? LucideIcons.minimize2 : LucideIcons.maximize2,
+                                    _onFullscreenTap,
+                                    _isFullscreen ? _pivotColor : dimColor,
+                                    _isFullscreen ? _pivotColor : borderColor,
+                                    bg: _isFullscreen ? _pivotColor.withOpacity(0.15) : surfaceColor.withOpacity(0.4),
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                _iconBtn(LucideIcons.settings, _toggleSettings,
+                                  _showSettings ? _pivotColor : dimColor,
+                                  _showSettings ? _pivotColor : borderColor,
+                                  bg: _showSettings ? _pivotColor.withOpacity(0.15) : surfaceColor.withOpacity(0.4)),
+                              ],
+                            ),
+                          ],
+                        ),
                         
+                        // Center Play/Pause button
                         GestureDetector(
                           onTap: _togglePlay,
                           child: Container(
@@ -375,29 +401,12 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                               color: _isPlaying ? surfaceColor.withOpacity(0.4) : _pivotColor.withOpacity(0.15),
                               shape: BoxShape.circle,
                               border: Border.all(color: _isPlaying ? borderColor : _pivotColor.withOpacity(0.5)),
+                              boxShadow: [
+                                BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4)),
+                              ],
                             ),
                             child: Icon(_isPlaying ? LucideIcons.pause : LucideIcons.play, color: _isPlaying ? dimColor : _pivotColor, size: 28),
                           ),
-                        ),
-                        
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            if (widget.onFullscreen != null) ...[  
-                              _iconBtn(
-                                _isFullscreen ? LucideIcons.minimize2 : LucideIcons.maximize2,
-                                _onFullscreenTap,
-                                _isFullscreen ? _pivotColor : dimColor,
-                                _isFullscreen ? _pivotColor : borderColor,
-                                bg: _isFullscreen ? _pivotColor.withOpacity(0.15) : surfaceColor.withOpacity(0.4),
-                              ),
-                              const SizedBox(width: 12),
-                            ],
-                            _iconBtn(LucideIcons.settings, _toggleSettings,
-                              _showSettings ? _pivotColor : dimColor,
-                              _showSettings ? _pivotColor : borderColor,
-                              bg: _showSettings ? _pivotColor.withOpacity(0.15) : surfaceColor.withOpacity(0.4)),
-                          ],
                         ),
                       ],
                     ),

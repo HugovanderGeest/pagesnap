@@ -113,8 +113,8 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
           // Tiny close button — top-left corner, semi-transparent
           Positioned(
-            top: MediaQuery.of(context).padding.top + 4,
-            left: 12,
+            top: MediaQuery.of(context).padding.top + 12,
+            left: 24,
             child: GestureDetector(
               onTap: _handleClose,
               child: Container(

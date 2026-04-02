@@ -20,6 +20,8 @@ class LibraryScreen extends StatefulWidget {
 class _LibraryScreenState extends State<LibraryScreen> {
   List<LocalBook> books = [];
   bool isLoading = false;
+  bool _showTips = true;
+  bool _tipsMinimized = false;
 
   @override
   void initState() {
@@ -98,6 +100,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final recentBooks = books.where((b) => b.progress > 0).take(5).toList();
+    final recentIds = recentBooks.map((b) => b.id).toSet();
+    final gridBooks = books.where((b) => !recentIds.contains(b.id)).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -252,13 +256,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       children: [
                         Icon(LucideIcons.bookOpen, size: 14, color: AppTheme.primary),
                         const SizedBox(width: 8),
-                        Text('ALL BOOKS (${books.length})', style: const TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 2)),
+                        Text('ALL BOOKS (${gridBooks.length})', style: const TextStyle(color: AppTheme.primary, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 2)),
                       ],
                     ),
                   ),
                 ),
 
-                if (books.isEmpty && !isLoading)
+                if (gridBooks.isEmpty && !isLoading)
                   SliverFillRemaining(
                     child: Center(
                       child: Column(
@@ -282,7 +286,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     sliver: SliverGrid(
                       delegate: SliverChildBuilderDelegate(
                         (context, index) {
-                          final book = books[index];
+                          final book = gridBooks[index];
                           return GestureDetector(
                             onTap: () => _openBook(book),
                             child: Container(
@@ -330,7 +334,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             ),
                           );
                         },
-                        childCount: books.length,
+                        childCount: gridBooks.length,
                       ),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
@@ -343,6 +347,78 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ],
             ),
           ),
+
+          // ── Onboarding Tips Widget ──────────────────────────────────────────
+          if (_showTips)
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 600),
+              curve: Curves.elasticOut,
+              bottom: _tipsMinimized ? 24 : 100,
+              right: _tipsMinimized ? 24 : (MediaQuery.of(context).size.width - 280) / 2,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                width: _tipsMinimized ? 56 : 280,
+                height: _tipsMinimized ? 56 : 180,
+                decoration: BoxDecoration(
+                  color: AppTheme.surface,
+                  borderRadius: BorderRadius.circular(_tipsMinimized ? 28 : 24),
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 20, offset: const Offset(0, 8)),
+                    if (_tipsMinimized) BoxShadow(color: AppTheme.accent.withOpacity(0.3), blurRadius: 12),
+                  ],
+                  border: Border.all(color: AppTheme.border.withOpacity(0.5)),
+                ),
+                child: _tipsMinimized
+                  ? InkWell(
+                      onTap: () => setState(() => _tipsMinimized = false),
+                      borderRadius: BorderRadius.circular(28),
+                      child: const Center(child: Icon(LucideIcons.lightbulb, color: AppTheme.accent, size: 24)),
+                    )
+                  : Stack(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(color: AppTheme.accent, shape: BoxShape.circle),
+                                    child: const Icon(LucideIcons.sparkles, color: Colors.white, size: 12),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  const Text('QUICK TIP', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.5, color: AppTheme.accent)),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Tap "Scan" to snap a page, or "Import" to load your EPUB/PDF files. Your reading stays synced!',
+                                style: TextStyle(fontSize: 14, height: 1.4, color: AppTheme.text),
+                              ),
+                              const Spacer(),
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: TextButton(
+                                  onPressed: () => setState(() => _tipsMinimized = true),
+                                  child: const Text('Got it', style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          top: 8, right: 8,
+                          child: IconButton(
+                            icon: const Icon(LucideIcons.x, size: 16, color: AppTheme.textDim),
+                            onPressed: () => setState(() => _showTips = false),
+                          ),
+                        ),
+                      ],
+                    ),
+              ),
+            ),
 
           if (isLoading)
             Container(
