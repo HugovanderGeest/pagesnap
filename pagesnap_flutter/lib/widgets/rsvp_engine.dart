@@ -15,7 +15,7 @@ class RSVPEngine extends StatefulWidget {
   const RSVPEngine({
     super.key,
     required this.words,
-    this.initialSpeed = 300,
+    this.initialSpeed = 50,
     this.initialIndex = 0,
     required this.onProgress,
     required this.onCompletion,
@@ -31,7 +31,7 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
   late int _currentIndex;
   late int _wpm;
   Timer? _timer;
-  Timer? _hideTimer;
+  Timer? _holdTimer;
 
   // Controls visibility — auto-hides after 3 s of play
   bool _controlsVisible = true;
@@ -60,7 +60,7 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
   @override
   void dispose() {
     _timer?.cancel();
-    _hideTimer?.cancel();
+    _holdTimer?.cancel();
     super.dispose();
   }
 
@@ -80,10 +80,7 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
   }
 
   void _scheduleHideControls() {
-    _hideTimer?.cancel();
-    _hideTimer = Timer(const Duration(seconds: 3), () {
-      if (mounted && _isPlaying) setState(() => _controlsVisible = false);
-    });
+    // Intentionally left blank, controls stay visible permanently
   }
 
   void _onTapScreen() {
@@ -91,8 +88,6 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
       setState(() { _showSettings = false; });
       return;
     }
-    setState(() => _controlsVisible = !_controlsVisible);
-    if (_isPlaying && _controlsVisible) _scheduleHideControls();
   }
 
   void _restart() {
@@ -189,41 +184,34 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                     Positioned(top: 0, bottom: 0, child: Container(width: 1, color: dimColor.withOpacity(0.12))),
                     Positioned(left: 0, right: 0, child: Container(height: 1, color: dimColor.withOpacity(0.12))),
 
-                    // ── Main word pivot-aligned + faded context left/right ──
+                    // ── Main word pivot-aligned + closely hugging context ──
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
                         children: [
-                          // Previous word — faint, left edge, right-aligned so it hugs center
-                          SizedBox(
-                            width: 72,
-                            child: _showContext && prevWord.isNotEmpty
-                                ? Text(
-                                    prevWord,
-                                    textAlign: TextAlign.right,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.fade,
-                                    softWrap: false,
-                                    style: TextStyle(
-                                      color: dimColor.withValues(alpha: 0.45),
-                                      fontSize: _fontSize * 0.34,
-                                      fontFamily: _fontFamily,
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 8),
-
-                          // Pivot-aligned center word
                           Expanded(
                             child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.end,
                               crossAxisAlignment: CrossAxisAlignment.baseline,
                               textBaseline: TextBaseline.alphabetic,
                               children: [
-                                Expanded(
-                                  child: Text(leftPart,
+                                if (_showContext && prevWord.isNotEmpty) ...[
+                                  Text(
+                                    prevWord,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.clip,
+                                    softWrap: false,
+                                    style: TextStyle(
+                                      color: dimColor.withOpacity(0.45),
+                                      fontSize: _fontSize * 0.34,
+                                      fontFamily: _fontFamily,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                Text(leftPart,
                                     textAlign: TextAlign.right,
                                     softWrap: false,
                                     overflow: TextOverflow.clip,
@@ -233,17 +221,24 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                                       fontFamily: _fontFamily,
                                       fontWeight: FontWeight.bold,
                                     )),
-                                ),
-                                Text(pivotChar,
-                                  style: TextStyle(
-                                    color: _pivotColor,
-                                    fontSize: _fontSize,
-                                    fontFamily: _fontFamily,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [Shadow(color: _pivotColor.withValues(alpha: 0.5), blurRadius: 8)],
-                                  )),
-                                Expanded(
-                                  child: Text(rightPart,
+                              ],
+                            ),
+                          ),
+                          Text(pivotChar,
+                              style: TextStyle(
+                                color: _pivotColor,
+                                fontSize: _fontSize,
+                                fontFamily: _fontFamily,
+                                fontWeight: FontWeight.bold,
+                                shadows: [Shadow(color: _pivotColor.withOpacity(0.5), blurRadius: 8)],
+                              )),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(rightPart,
                                     textAlign: TextAlign.left,
                                     softWrap: false,
                                     overflow: TextOverflow.clip,
@@ -253,29 +248,22 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                                       fontFamily: _fontFamily,
                                       fontWeight: FontWeight.bold,
                                     )),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(width: 8),
-                          // Next word — faint, right edge, left-aligned so it hugs center
-                          SizedBox(
-                            width: 72,
-                            child: _showContext && nextWord.isNotEmpty
-                                ? Text(
+                                if (_showContext && nextWord.isNotEmpty) ...[
+                                  const SizedBox(width: 12),
+                                  Text(
                                     nextWord,
-                                    textAlign: TextAlign.left,
                                     maxLines: 1,
-                                    overflow: TextOverflow.fade,
+                                    overflow: TextOverflow.clip,
                                     softWrap: false,
                                     style: TextStyle(
-                                      color: dimColor.withValues(alpha: 0.45),
+                                      color: dimColor.withOpacity(0.45),
                                       fontSize: _fontSize * 0.34,
                                       fontFamily: _fontFamily,
                                     ),
-                                  )
-                                : null,
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -312,14 +300,18 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                   color: Colors.transparent,
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                    height: 3,
-                    color: dimColor.withOpacity(0.12),
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: dimColor.withOpacity(0.12),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                    ),
                     child: FractionallySizedBox(
                       alignment: Alignment.centerLeft,
                       widthFactor: progress,
                       child: Container(
                         decoration: BoxDecoration(
                           color: _pivotColor,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
                           boxShadow: [BoxShadow(color: _pivotColor.withOpacity(0.5), blurRadius: 6)],
                         ),
                       ),
@@ -346,13 +338,6 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                            Text('SPEED', style: TextStyle(fontSize: 10, color: dimColor, letterSpacing: 2, fontWeight: FontWeight.bold)),
-                            Text('$_wpm WPM', style: TextStyle(fontSize: 10, color: textColor, fontWeight: FontWeight.bold)),
-                          ]),
-                          Slider(value: _wpm.toDouble(), min: 10, max: 1000, divisions: 99,
-                            activeColor: _pivotColor, inactiveColor: borderColor,
-                            onChanged: (v) => setState(() => _wpm = v.toInt())),
                           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                             Text('FONT SIZE', style: TextStyle(fontSize: 10, color: dimColor, letterSpacing: 2, fontWeight: FontWeight.bold)),
                             Text('${_fontSize.toInt()}px', style: TextStyle(fontSize: 10, color: textColor, fontWeight: FontWeight.bold)),
@@ -387,13 +372,13 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                         GestureDetector(
                           onTap: _togglePlay,
                           child: Container(
-                            width: 60, height: 60,
+                            width: 56, height: 56,
                             decoration: BoxDecoration(
-                              color: _pivotColor,
+                              color: dimColor.withOpacity(0.1),
                               shape: BoxShape.circle,
-                              boxShadow: [BoxShadow(color: _pivotColor.withOpacity(0.35), blurRadius: 14)],
+                              border: Border.all(color: borderColor),
                             ),
-                            child: Icon(_isPlaying ? LucideIcons.pause : LucideIcons.play, color: Colors.white, size: 22),
+                            child: Icon(_isPlaying ? LucideIcons.pause : LucideIcons.play, color: dimColor.withOpacity(0.8), size: 22),
                           ),
                         ),
                         const SizedBox(width: 28),
@@ -412,6 +397,54 @@ class _RSVPEngineState extends State<RSVPEngine> with SingleTickerProviderStateM
                           ),
                         ],
                       ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Floating Speed Controls ───────────────────────────────────────
+            Positioned(
+              bottom: 110,
+              right: 20,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('$_wpm', style: TextStyle(color: dimColor.withOpacity(0.8), fontSize: 12, fontWeight: FontWeight.bold, fontFamily: _fontFamily)),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () => setState(() => _wpm = (_wpm + 10).clamp(10, 1000)),
+                    onLongPressStart: (_) {
+                      _holdTimer?.cancel();
+                      _holdTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+                        setState(() => _wpm = (_wpm + 10).clamp(10, 1000));
+                        if (_wpm >= 1000) timer.cancel();
+                      });
+                    },
+                    onLongPressEnd: (_) => _holdTimer?.cancel(),
+                    onLongPressCancel: () => _holdTimer?.cancel(),
+                    child: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(color: surfaceColor, shape: BoxShape.circle, border: Border.all(color: borderColor)),
+                      child: Icon(LucideIcons.plus, color: dimColor, size: 18),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () => setState(() => _wpm = (_wpm - 10).clamp(10, 1000)),
+                    onLongPressStart: (_) {
+                      _holdTimer?.cancel();
+                      _holdTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
+                        setState(() => _wpm = (_wpm - 10).clamp(10, 1000));
+                        if (_wpm <= 10) timer.cancel();
+                      });
+                    },
+                    onLongPressEnd: (_) => _holdTimer?.cancel(),
+                    onLongPressCancel: () => _holdTimer?.cancel(),
+                    child: Container(
+                      width: 40, height: 40,
+                      decoration: BoxDecoration(color: surfaceColor, shape: BoxShape.circle, border: Border.all(color: borderColor)),
+                      child: Icon(LucideIcons.minus, color: dimColor, size: 18),
                     ),
                   ),
                 ],

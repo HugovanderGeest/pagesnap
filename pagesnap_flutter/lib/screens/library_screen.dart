@@ -111,47 +111,55 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Library', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1, color: AppTheme.text)),
-                        Row(
+                        Wrap(
+                          alignment: WrapAlignment.spaceBetween,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 16,
+                          runSpacing: 8,
                           children: [
-                            OutlinedButton.icon(
-                              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerScreen())),
-                              icon: const Icon(LucideIcons.camera, size: 16, color: AppTheme.accent),
-                              label: const Text('SCAN', style: TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 11, color: AppTheme.accent)),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppTheme.accent, width: 0.8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                backgroundColor: AppTheme.accent.withOpacity(0.08),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            OutlinedButton.icon(
-                              onPressed: isLoading ? null : _handleImport,
-                              icon: const Icon(LucideIcons.plus, size: 16, color: AppTheme.primary),
-                              label: const Text('IMPORT', style: TextStyle(fontFamily: 'Courier', fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 11, color: AppTheme.text)),
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(color: AppTheme.border),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                backgroundColor: AppTheme.surface,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AccountScreen())),
-                              borderRadius: BorderRadius.circular(24),
-                              child: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: AppTheme.border),
-                                  shape: BoxShape.circle,
-                                  color: AppTheme.surface,
+                            const Text('Library', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, letterSpacing: -1, color: AppTheme.text)),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                OutlinedButton.icon(
+                                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ScannerScreen())),
+                                  icon: const Icon(LucideIcons.camera, size: 16, color: AppTheme.accent),
+                                  label: const SizedBox.shrink(),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: AppTheme.accent, width: 0.8),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    backgroundColor: AppTheme.accent.withOpacity(0.08),
+                                  ),
                                 ),
-                                child: const Icon(LucideIcons.user, size: 18, color: AppTheme.text),
-                              ),
+                                const SizedBox(width: 8),
+                                OutlinedButton.icon(
+                                  onPressed: isLoading ? null : _handleImport,
+                                  icon: const Icon(LucideIcons.plus, size: 16, color: AppTheme.primary),
+                                  label: const SizedBox.shrink(),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: AppTheme.border),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    backgroundColor: AppTheme.surface,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                InkWell(
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AccountScreen())),
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: AppTheme.border),
+                                      shape: BoxShape.circle,
+                                      color: AppTheme.surface,
+                                    ),
+                                    child: const Icon(LucideIcons.user, size: 18, color: AppTheme.text),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
