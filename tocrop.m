@@ -176,7 +176,7 @@ static const CGFloat kTOCropViewControllerToolbarHeight = 44.0f;
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-
+aaaaaaaaaaaaa
     // Disable the transition flag for the status bar
     self.inTransition = NO;
 

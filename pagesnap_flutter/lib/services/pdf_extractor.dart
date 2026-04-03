@@ -14,7 +14,7 @@ class PdfExtractor {
       final words = fullText
           .replaceAll(RegExp(r'\s+'), ' ')
           .replaceAll(RegExp(r'\u00AD'), '') // Strip soft hyphens
-          .replaceAll(RegExp(r'(?<=[a-z])Z(?=[a-z])'), '') // Strip broken OCR 'Z' hyphens
+          .replaceAll(RegExp(r'([a-zA-Z])Z([a-zA-Z])'), r'$1$2') // Fix mid-word Z
           .replaceAll(RegExp(r'[^\w\s.,!?''"-]'), '')
           .trim()
           .split(' ')

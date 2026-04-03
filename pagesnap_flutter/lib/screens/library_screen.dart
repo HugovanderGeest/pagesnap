@@ -115,15 +115,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Wrap(
-                          alignment: WrapAlignment.spaceBetween,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 16,
-                          runSpacing: 8,
-                          children: [
-                            Image.asset('assets/logo.png', height: 32, width: 32),
-                            Row(
+                        Image.asset('assets/logo.png', height: 32, width: 32),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 OutlinedButton.icon(
@@ -149,23 +148,23 @@ class _LibraryScreenState extends State<LibraryScreen> {
                                     backgroundColor: AppTheme.surface,
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AccountScreen())),
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: AppTheme.border),
-                                      shape: BoxShape.circle,
-                                      color: AppTheme.surface,
-                                    ),
-                                    child: const Icon(LucideIcons.user, size: 18, color: AppTheme.text),
-                                  ),
-                                ),
                               ],
                             ),
-                          ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        InkWell(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => AccountScreen())),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.border),
+                              shape: BoxShape.circle,
+                              color: AppTheme.surface,
+                            ),
+                            child: const Icon(LucideIcons.user, size: 18, color: AppTheme.text),
+                          ),
                         ),
                       ],
                     ),
